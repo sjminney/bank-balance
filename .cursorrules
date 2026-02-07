@@ -1,0 +1,321 @@
+# Slick Fintech - Clean Code & Design System Rules
+
+## Core Principles
+
+### Clean Code Standards
+- **SOLID Principles**: All code must follow Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles
+- **DRY (Don't Repeat Yourself)**: Extract reusable logic into shared utilities, hooks, or components
+- **KISS (Keep It Simple, Stupid)**: Prefer simple, readable solutions over clever ones
+- **YAGNI (You Aren't Gonna Need It)**: Don't add functionality until it's actually needed
+- **Meaningful Names**: Use descriptive, intention-revealing names for variables, functions, and components
+- **Small Functions**: Functions should do one thing and do it well (ideally < 20 lines)
+- **No Magic Numbers/Strings**: Extract constants with descriptive names
+- **Error Handling**: Always handle errors explicitly - never silently fail
+
+## Slick Fintech Design System - "Quiet Luxury" Theme
+
+### Design Philosophy
+Every new feature must align with the "Slick Fintech" design system principles:
+- **Quiet Luxury Dark Mode**: Elegant, sophisticated dark theme with #09090b background
+- **Glassmorphism**: Cards use glass effect (bg-white/5, backdrop-blur-md, border-white/10)
+- **Modern & Minimal**: Clean interfaces with purposeful whitespace
+- **Professional**: Enterprise-grade polish and attention to detail
+- **Accessible**: WCAG 2.1 AA compliance minimum
+- **Consistent**: Reuse existing design tokens and components
+- **Responsive**: Mobile-first approach with graceful desktop enhancement
+
+### Design System Integration
+
+#### Before Creating New Components
+1. **Check Design System First**: Always check if a component exists in the design system before creating new ones
+2. **Use Design Tokens**: Colors, spacing, typography, shadows, and borders must use design system tokens
+3. **Component Composition**: Prefer composing existing components over creating new ones
+4. **Design Review**: New UI components require design system alignment review
+
+#### Required Design System Elements
+
+**Color Palette (Quiet Luxury Dark)**:
+- **Background**: `#09090b` (hsl(240 10% 3.9%)) - Primary dark background
+- **Glass Cards**: `bg-white/5` with `backdrop-blur-md` and `border-white/10`
+- **Text Primary**: `text-white` or `text-foreground` (hsl(0 0% 98%))
+- **Text Muted**: `text-muted-foreground` (hsl(240 5% 64.9%))
+- **Accents**: Use semantic colors (green-400 for positive, red-400 for negative)
+
+**Border Radius**:
+- **All Components**: `rounded-2xl` (1rem) - This is MANDATORY for all cards, buttons, and containers
+- **Small Elements**: `rounded-xl` for smaller interactive elements
+
+**Typography**:
+- **Font**: Inter (from next/font/google)
+- **Scale**: Follow Tailwind's default scale, use semantic sizes (text-sm, text-base, text-lg, text-xl, text-2xl, text-3xl, text-4xl)
+- **Weights**: Use font-medium, font-semibold for emphasis
+
+**Spacing**: 
+- Use consistent spacing scale: 4px (gap-1), 8px (gap-2), 12px (gap-3), 16px (gap-4), 24px (gap-6), 32px (gap-8)
+- Padding: p-4 (16px), p-6 (24px), p-8 (32px)
+
+**Icons**:
+- **Library**: Lucide React exclusively
+- **Stroke Width**: Always use `strokeWidth={1.5}` for thin, modern appearance
+- **Sizes**: w-4 h-4 (small), w-5 h-5 (medium), w-6 h-6 (large)
+
+**Animations**:
+- **Library**: Framer Motion for all transitions
+- **Duration**: 200-300ms for smooth, app-like feel
+- **Easing**: Default easing (ease-in-out)
+- **Hover Effects**: `whileHover={{ scale: 1.02 }}` for cards, `whileTap={{ scale: 0.98 }}` for buttons
+- **Page Transitions**: Use `initial`, `animate`, `exit` props with opacity and y-axis transforms
+
+**Glassmorphism Pattern**:
+```tsx
+// ✅ GOOD: Glass card pattern
+<div className="glass-card">
+  {/* content */}
+</div>
+
+// Or manually:
+<div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6">
+  {/* content */}
+</div>
+```
+
+### Component Standards
+
+#### Component Structure
+```typescript
+// ✅ GOOD: Well-structured component
+import { DesignSystemTokens } from '@/design-system';
+
+interface ComponentProps {
+  // Props with clear types
+}
+
+export const Component: React.FC<ComponentProps> = ({ prop }) => {
+  // Hooks at the top
+  // Derived state/computed values
+  // Event handlers
+  // Render
+};
+```
+
+#### Component Naming
+- **PascalCase** for components: `AccountBalance`, `TransactionCard`
+- **camelCase** for functions/hooks: `useAccountData`, `formatCurrency`
+- **UPPER_SNAKE_CASE** for constants: `MAX_TRANSACTION_AMOUNT`
+- **Descriptive names**: `TransactionHistoryCard` not `Card`
+
+## Code Organization
+
+### File Structure
+```
+src/
+  components/          # Reusable UI components
+    design-system/     # Design system components
+    features/          # Feature-specific components
+  hooks/              # Custom React hooks
+  utils/              # Pure utility functions
+  services/           # API services and business logic
+  types/              # TypeScript type definitions
+  constants/          # Application constants
+  styles/             # Global styles and design tokens
+```
+
+### Import Organization
+1. External libraries (React, third-party)
+2. Internal absolute imports (@/components, @/utils)
+3. Relative imports
+4. Type imports (separate with blank line if needed)
+
+```typescript
+// ✅ GOOD
+import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+
+import { Button } from '@/design-system';
+import { useAccountData } from '@/hooks';
+import { formatCurrency } from '@/utils';
+
+import { AccountType } from './types';
+```
+
+## TypeScript Standards
+
+### Type Safety
+- **Strict mode**: Always use TypeScript strict mode
+- **No `any`**: Avoid `any` type - use `unknown` if type is truly unknown
+- **Explicit return types**: Functions should have explicit return types
+- **Interface over type**: Prefer `interface` for object shapes, `type` for unions/intersections
+- **Generic constraints**: Use generics with constraints when appropriate
+
+### Type Definitions
+```typescript
+// ✅ GOOD
+interface UserAccount {
+  id: string;
+  balance: number;
+  currency: string;
+  createdAt: Date;
+}
+
+// ❌ BAD
+const account: any = { ... };
+```
+
+## React Patterns
+
+### Component Best Practices
+- **Functional components only**: No class components
+- **Custom hooks**: Extract reusable logic into custom hooks
+- **Memoization**: Use `React.memo`, `useMemo`, `useCallback` judiciously (not everywhere)
+- **Props destructuring**: Destructure props in function signature
+- **Early returns**: Use early returns for conditional rendering
+
+### State Management
+- **Local state first**: Use `useState` for component-local state
+- **Lifted state**: Lift state only when multiple components need it
+- **State management library**: Use only when local/lifted state becomes unwieldy
+- **Derived state**: Compute derived values in render, not in state
+
+### Hooks Rules
+- **Custom hooks**: Prefix with `use` (e.g., `useAccountBalance`)
+- **Hook dependencies**: Always include all dependencies in dependency arrays
+- **No conditional hooks**: Hooks must be called unconditionally
+
+## Testing Standards
+
+### Test Requirements
+- **Unit tests**: All utility functions and hooks must have unit tests
+- **Component tests**: Critical UI components must have component tests
+- **Integration tests**: User flows must have integration tests
+- **Test coverage**: Maintain minimum 80% code coverage
+
+### Test Organization
+- **Colocate tests**: Tests live next to the code they test (`Component.test.tsx`)
+- **Test naming**: `describe('ComponentName', () => { it('should do something', () => {}) })`
+- **Arrange-Act-Assert**: Structure tests with clear AAA pattern
+
+## Performance Standards
+
+### Optimization Guidelines
+- **Code splitting**: Use React.lazy for route-level code splitting
+- **Image optimization**: Use optimized image formats (WebP, AVIF) with proper sizing
+- **Bundle size**: Monitor and optimize bundle size (target < 200KB initial load)
+- **Avoid premature optimization**: Optimize only when performance issues are identified
+
+### Performance Anti-patterns
+- ❌ Don't memoize everything
+- ❌ Don't inline large objects/arrays in JSX
+- ❌ Don't create functions in render (use useCallback when needed)
+- ❌ Don't fetch data in render (use useEffect or data fetching library)
+
+## Accessibility (a11y)
+
+### Required Practices
+- **Semantic HTML**: Use proper HTML elements (`<button>`, `<nav>`, `<main>`, etc.)
+- **ARIA labels**: Add ARIA labels when semantic HTML isn't sufficient
+- **Keyboard navigation**: All interactive elements must be keyboard accessible
+- **Focus management**: Visible focus indicators, logical tab order
+- **Color contrast**: Minimum 4.5:1 for text, 3:1 for UI components
+- **Screen reader support**: Test with screen readers
+
+## Error Handling
+
+### Error Patterns
+```typescript
+// ✅ GOOD: Explicit error handling
+try {
+  const data = await fetchAccountData();
+  return { data, error: null };
+} catch (error) {
+  logger.error('Failed to fetch account data', { error });
+  return { data: null, error: error.message };
+}
+
+// ❌ BAD: Silent failure
+try {
+  await fetchAccountData();
+} catch (e) {}
+```
+
+### Error Boundaries
+- **React Error Boundaries**: Wrap feature sections in error boundaries
+- **User-friendly messages**: Show helpful error messages, not technical details
+- **Error logging**: Log errors to monitoring service
+
+## Documentation
+
+### Code Documentation
+- **JSDoc comments**: Document public APIs, complex functions, and non-obvious logic
+- **README files**: Each major feature/module should have a README
+- **Inline comments**: Explain "why", not "what" (code should be self-documenting)
+
+### Component Documentation
+```typescript
+/**
+ * Displays account balance with currency formatting.
+ * 
+ * @param account - The account object containing balance and currency
+ * @param showChange - Whether to display balance change indicator
+ */
+export const AccountBalance: React.FC<AccountBalanceProps> = ({ ... }) => {
+  // ...
+};
+```
+
+## Git & Version Control
+
+### Commit Messages
+- **Conventional commits**: Use format `type(scope): description`
+- **Types**: feat, fix, docs, style, refactor, test, chore
+- **Examples**: 
+  - `feat(accounts): add balance display component`
+  - `fix(transactions): resolve currency formatting issue`
+  - `style(design-system): update button hover states`
+
+### Branch Naming
+- **Feature branches**: `feature/account-balance-display`
+- **Bug fixes**: `fix/transaction-sorting`
+- **Hotfixes**: `hotfix/critical-balance-calculation`
+
+## Code Review Checklist
+
+Before submitting code for review, ensure:
+- [ ] Code follows all clean code principles
+- [ ] Design system components/tokens are used
+- [ ] TypeScript types are properly defined (no `any`)
+- [ ] Tests are written and passing
+- [ ] Accessibility requirements are met
+- [ ] Error handling is implemented
+- [ ] Performance considerations addressed
+- [ ] Documentation is updated
+- [ ] No console.logs or debug code
+- [ ] Code is properly formatted and linted
+
+## Design System Checklist for New Features
+
+When adding a new feature:
+- [ ] Checked design system for existing components
+- [ ] Used Quiet Luxury color palette (#09090b background, glassmorphism cards)
+- [ ] All cards/containers use `rounded-2xl` border radius
+- [ ] Glassmorphism applied (`bg-white/5 backdrop-blur-md border-white/10`)
+- [ ] Lucide React icons with `strokeWidth={1.5}`
+- [ ] Framer Motion animations with 200-300ms duration
+- [ ] Used design tokens for colors, spacing, typography
+- [ ] Component follows design system patterns
+- [ ] Responsive design implemented (mobile-first)
+- [ ] Accessibility requirements met
+- [ ] Consistent with existing UI patterns
+- [ ] PWA considerations (if applicable)
+
+## Enforcement
+
+These rules are enforced through:
+- **Code reviews**: All PRs must adhere to these standards
+- **Linting**: ESLint/Prettier configured to catch violations
+- **Type checking**: TypeScript strict mode catches type issues
+- **Automated tests**: CI/CD pipeline runs tests and checks
+- **Design reviews**: UI changes require design system alignment
+
+---
+
+**Remember**: Clean code is not just about working code - it's about code that is maintainable, readable, and aligned with the Slick Fintech design system. When in doubt, prioritize clarity and consistency over cleverness.
