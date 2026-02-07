@@ -50,7 +50,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (result?.success && result?.message) {
+      if (result && "success" in result && result.success && result.message) {
         // Email confirmation required - show success message
         setError(null);
         setSuccessMessage(result.message);
