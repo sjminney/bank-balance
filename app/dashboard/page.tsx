@@ -978,6 +978,22 @@ export default function DashboardPage() {
                 </motion.div>
               )}
 
+              {/* Spend & Save chart */}
+              {spendSaveChartData.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="glass-card p-4 sm:p-6"
+                >
+                  <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Spend & Save</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+                    Monthly spend and save with trendlines (last 12 months).
+                  </p>
+                  <SpendSaveChart data={spendSaveChartData} />
+                </motion.div>
+              )}
+
               {/* Balance Trend Chart */}
               {(balances.length > 0 || bankAccounts.length > 0) && (
                 <motion.div
@@ -1059,22 +1075,6 @@ export default function DashboardPage() {
                       <p>Add monthly balances to see the trend chart</p>
                     </div>
                   )}
-                </motion.div>
-              )}
-
-              {/* Spend & Save chart */}
-              {spendSaveChartData.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45 }}
-                  className="glass-card p-4 sm:p-6"
-                >
-                  <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Spend & Save</h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                    Monthly spend and save with trendlines (last 12 months).
-                  </p>
-                  <SpendSaveChart data={spendSaveChartData} />
                 </motion.div>
               )}
 
