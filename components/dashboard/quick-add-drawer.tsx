@@ -79,7 +79,7 @@ export function QuickAddDrawer({ open, onOpenChange, onSuccess, initialBalance }
     try {
       const result = await addMonthlyBalance(formData);
 
-      if (result?.error) {
+      if (result && "error" in result && result.error) {
         setError(typeof result.error === "string" ? result.error : String(result.error));
         setIsSubmitting(false);
         return;
