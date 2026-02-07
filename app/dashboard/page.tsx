@@ -375,11 +375,15 @@ export default function DashboardPage() {
     ? { month_year: viewPreviousMonth, balance: monthlyTotalByMonth.get(viewPreviousMonth) ?? 0 }
     : null;
   const currentMonthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
-  const viewMonthLabel = viewMonth
-    ? viewMonth === currentMonthYear
-      ? "this month"
-      : new Date(viewMonth + "-01").toLocaleDateString("en-AU", { month: "long", year: "numeric" })
-    : "this month";
+  // Normalise to YYYY-MM (month_year can be "2024-03" or "2024-03-15") and format safely
+  const viewMonthNorm = viewMonth ? viewMonth.slice(0, 7) : "";
+  const viewMonthLabel = (() => {
+    if (!viewMonthNorm || viewMonthNorm.length < 7) return "this month";
+    if (viewMonthNorm === currentMonthYear) return "this month";
+    const d = new Date(viewMonthNorm + "-01");
+    if (Number.isNaN(d.getTime())) return "this month";
+    return d.toLocaleDateString("en-AU", { month: "long", year: "numeric" });
+  })();
 
   // Spend & save chart data: when a month is selected, last 12 months up to that month; else last 12
   const spendSaveChartData = useMemo(() => {
@@ -491,18 +495,18 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#09090b] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header — stacks on mobile for better fit */}
+        {/* Header — title left, Settings & Sign Out right-justified on first line */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6 md:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          className="mb-6 md:mb-8 flex flex-row items-center justify-between gap-3"
         >
           <div className="min-w-0">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-1 md:mb-2 truncate">Bank Balance</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">Track your finances across all accounts</p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
             <Button
               onClick={() => router.push("/settings")}
               variant="ghost"
@@ -582,15 +586,20 @@ export default function DashboardPage() {
                     <option value="" style={{ backgroundColor: "#09090b", color: "#ffffff" }}>
                       Latest
                     </option>
-                    {monthlySummaryRows.map((row) => (
-                      <option
-                        key={row.month_year}
-                        value={row.month_year}
-                        style={{ backgroundColor: "#09090b", color: "#ffffff" }}
-                      >
-                        {new Date(row.month_year).toLocaleDateString("en-AU", { month: "long", year: "numeric" })}
-                      </option>
-                    ))}
+                    {monthlySummaryRows.map((row) => {
+                      const norm = row.month_year.slice(0, 7);
+                      const d = norm.length === 7 ? new Date(norm + "-01") : null;
+                      const label = d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString("en-AU", { month: "long", year: "numeric" }) : row.month_year;
+                      return (
+                        <option
+                          key={row.month_year}
+                          value={row.month_year}
+                          style={{ backgroundColor: "#09090b", color: "#ffffff" }}
+                        >
+                          {label}
+                        </option>
+                      );
+                    })}
                   </select>
                 </motion.div>
               )}
@@ -706,9 +715,13 @@ export default function DashboardPage() {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {(viewMonth ?? incomes[0]?.month_year)
-                        ? new Date(viewMonth ?? incomes[0]?.month_year ?? "").toLocaleDateString("en-AU", { month: "long", year: "numeric" })
-                        : "Record income separately from balances (no account)."}
+                      {(() => {
+                        const m = viewMonth ?? incomes[0]?.month_year ?? "";
+                        const norm = m ? m.slice(0, 7) : "";
+                        const d = norm.length === 7 ? new Date(norm + "-01") : null;
+                        const label = d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString("en-AU", { month: "long", year: "numeric" }) : null;
+                        return label ?? "Record income separately from balances (no account).";
+                      })()}
                     </p>
                   </div>
 
@@ -824,7 +837,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:mb-6">
                   <div className="min-w-0">
                     <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">
-                      Net Worth{viewMonth ? ` (${new Date(viewMonth).toLocaleDateString("en-AU", { month: "long", year: "numeric" })})` : ""}
+                      Net Worth{viewMonthLabel !== "this month" ? ` (${viewMonthLabel})` : ""}
                     </p>
                     <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight tabular-nums break-words">
                       ${(viewMonth ? viewTotalBalance : metrics.totalBalance).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}

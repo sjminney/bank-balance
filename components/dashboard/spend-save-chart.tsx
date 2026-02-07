@@ -43,13 +43,16 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
       .sort((a, b) => new Date(a.month_year).getTime() - new Date(b.month_year).getTime());
     const last12 = sorted.slice(-12);
     if (last12.length === 0) return [];
+    // Exclude the first (oldest) month from the chart
+    const chartMonths = last12.slice(1);
+    if (chartMonths.length === 0) return [];
 
-    const spendValues = last12.map((d) => d.spend);
-    const saveValues = last12.map((d) => d.save);
+    const spendValues = chartMonths.map((d) => d.spend);
+    const saveValues = chartMonths.map((d) => d.save);
     const spendTrend = linearTrend(spendValues);
     const saveTrend = linearTrend(saveValues);
 
-    return last12.map((d, i) => ({
+    return chartMonths.map((d, i) => ({
       month: new Date(d.month_year).toLocaleDateString("en-AU", { month: "short", year: "numeric" }),
       fullDate: d.month_year,
       spend: d.spend ?? undefined,
@@ -105,15 +108,13 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
           />
           <Legend
             wrapperStyle={{ fontSize: "12px" }}
-            formatter={(value) =>
-              value === "spend" ? "Spend" : value === "save" ? "Save" : value === "spendTrend" ? "Spend trend" : "Save trend"
-            }
+            formatter={(value) => (value === "spend" ? "Spend" : value === "save" ? "Save" : "")}
           />
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="2 2" />
           <Line type="monotone" dataKey="spend" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 3 }} activeDot={{ r: 5 }} name="spend" connectNulls />
           <Line type="monotone" dataKey="save" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 3 }} activeDot={{ r: 5 }} name="save" connectNulls />
-          <Line type="monotone" dataKey="spendTrend" stroke="rgba(245,158,11,0.6)" strokeWidth={1} strokeDasharray="3 3" dot={false} name="spendTrend" connectNulls />
-          <Line type="monotone" dataKey="saveTrend" stroke="rgba(34,197,94,0.6)" strokeWidth={1} strokeDasharray="3 3" dot={false} name="saveTrend" connectNulls />
+          <Line type="monotone" dataKey="spendTrend" stroke="rgba(245,158,11,0.6)" strokeWidth={1} strokeDasharray="3 3" dot={false} name="spendTrend" connectNulls legendType="none" />
+          <Line type="monotone" dataKey="saveTrend" stroke="rgba(34,197,94,0.6)" strokeWidth={1} strokeDasharray="3 3" dot={false} name="saveTrend" connectNulls legendType="none" />
         </LineChart>
       </ResponsiveContainer>
     </div>
