@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Wallet, Banknote, TrendingUp, Target, HelpCircle } from "lucide-react";
+import { ArrowLeft, BookOpen, Wallet, Banknote, TrendingUp, Target, HelpCircle, Settings, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function HelpPage() {
@@ -168,6 +168,30 @@ export default function HelpPage() {
               inflate your “savings” or hide how much you actually spent. Interest is handled the same way: it’s recorded and then
               excluded from the main savings figure so you see your true frugal savings and real spend.
             </p>
+          </motion.section>
+
+          {/* Settings & delete all data */}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass rounded-2xl p-6"
+          >
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
+              <Settings className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+              Settings & data
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              In <strong className="text-white">Settings</strong> you manage your bank accounts (add, edit, remove). You can also start fresh.
+            </p>
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-muted-foreground leading-relaxed flex gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" strokeWidth={1.5} />
+                <span>
+                  <strong className="text-white">Delete all data</strong> (in Settings) permanently removes all your balances, income, and bank accounts. There are <strong className="text-white">no backups</strong> and <strong className="text-white">no way to get your data back</strong>. You must confirm in a warning dialog before anything is deleted.
+                </span>
+              </p>
+            </div>
           </motion.section>
         </div>
 
