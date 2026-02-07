@@ -28,17 +28,21 @@ export async function addBankAccount(formData: FormData) {
       return { error: "Account name and type are required" };
     }
 
-    const { error } = await supabase.from("bank_accounts").insert({
-      user_id: user.id,
-      name,
-      bank_name: bankName || null,
-      account_type: accountType,
-      account_number_last4: accountNumberLast4 || null,
-      currency,
-      color: color || null,
-      notes: notes || null,
-      is_active: true,
-    });
+    const { data, error } = await supabase
+      .from("bank_accounts")
+      .insert({
+        user_id: user.id,
+        name,
+        bank_name: bankName || null,
+        account_type: accountType,
+        account_number_last4: accountNumberLast4 || null,
+        currency,
+        color: color || null,
+        notes: notes || null,
+        is_active: true,
+      })
+      .select("id")
+      .single();
 
     if (error) {
       console.error("Error adding bank account:", error);
@@ -46,7 +50,7 @@ export async function addBankAccount(formData: FormData) {
     }
 
     revalidatePath("/settings");
-    return { success: true };
+    return { success: true, id: data?.id };
   } catch (error) {
     console.error("Unexpected error:", error);
     return {

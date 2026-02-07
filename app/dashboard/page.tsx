@@ -415,6 +415,22 @@ export default function DashboardPage() {
     return viewRow.savings > prevRow.savings ? 1 : viewRow.savings < prevRow.savings ? -1 : 0;
   }, [monthlySummaryRows, viewMonth, viewPreviousMonth]);
 
+  // View month: income, save, spend and % of income (for Spend and Save cards)
+  const viewMonthIncome = useMemo(
+    () => Number(incomes.find((i) => i.month_year === viewMonth)?.amount ?? 0),
+    [incomes, viewMonth]
+  );
+  const viewMonthSave = useMemo(() => {
+    if (!viewMonth) return 0;
+    const interest = interestByMonth.get(viewMonth) ?? 0;
+    const oneOff = oneOffByMonth.get(viewMonth) ?? 0;
+    const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
+    return changeInBalance - oneOff - interest;
+  }, [viewMonth, viewPreviousBalance?.balance, viewTotalBalance, interestByMonth, oneOffByMonth]);
+  const viewMonthSpend = viewMonthIncome - viewMonthSave;
+  const spendPctOfIncome = viewMonthIncome > 0 ? (viewMonthSpend / viewMonthIncome) * 100 : null;
+  const savePctOfIncome = viewMonthIncome > 0 ? (viewMonthSave / viewMonthIncome) * 100 : null;
+
   // Spend & save chart data: when a month is selected, last 12 months up to that month; else last 12
   const spendSaveChartData = useMemo(() => {
     const rows = monthlySummaryRows.map((r) => ({
@@ -662,15 +678,7 @@ export default function DashboardPage() {
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">Spend ({viewMonthLabel})</p>
                             <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
-                              ${((): number => {
-                                const inc = incomes.find((i) => i.month_year === viewMonth);
-                                const income = Number(inc?.amount ?? 0);
-                                const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
-                                const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
-                                const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
-                                const savings = changeInBalance - oneOff - interest;
-                                return income - savings;
-                              })().toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              ${viewMonthSpend.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </div>
                         </div>
@@ -680,7 +688,10 @@ export default function DashboardPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{spendThisMonthTrend !== null ? "vs prior month" : "Income − savings"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {spendThisMonthTrend !== null ? "vs prior month" : "Income − savings"}
+                        {spendPctOfIncome != null && ` · ${spendPctOfIncome.toFixed(0)}% of income`}
+                      </p>
                     </div>
                   )}
 
@@ -694,19 +705,8 @@ export default function DashboardPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">Savings ({viewMonthLabel})</p>
-                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${((): number => {
-                              const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
-                              const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
-                              const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
-                              return changeInBalance - oneOff - interest;
-                            })() >= 0 ? "text-green-400" : "text-red-400"}`}>
-                              {(() => {
-                                const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
-                                const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
-                                const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
-                                const s = changeInBalance - oneOff - interest;
-                                return `${s >= 0 ? "+" : ""}$${s.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-                              })()}
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${viewMonthSave >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {viewMonthSave >= 0 ? "+" : ""}${viewMonthSave.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </div>
                         </div>
@@ -716,7 +716,10 @@ export default function DashboardPage() {
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{savingsThisMonthTrend !== null ? "vs prior month" : "Balance change − one-off − interest"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {savingsThisMonthTrend !== null ? "vs prior month" : "Balance change − one-off − interest"}
+                        {savePctOfIncome != null && ` · ${savePctOfIncome.toFixed(0)}% of income`}
+                      </p>
                     </div>
                   )}
 
