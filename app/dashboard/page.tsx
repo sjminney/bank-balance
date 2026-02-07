@@ -643,7 +643,7 @@ export default function DashboardPage() {
                 </motion.div>
               )}
 
-              {/* Metrics — Row 1: this month spend, 3m spend, 6m spend, income. Row 2: this month save, 3m save, 6m save, projection */}
+              {/* Metrics — order: Spend, Save, 3M spend, 3M save, 6M spend, 6M save, Income, Net worth, Annual Projection */}
               {(balances.length > 0 || incomes.length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -651,7 +651,7 @@ export default function DashboardPage() {
                   transition={{ delay: 0.2 }}
                   className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
                 >
-                  {/* Row 1 col 1: Spend this month */}
+                  {/* 1. Spend this month */}
                   {viewMonth && (
                     <div className="glass-card p-4 sm:p-6">
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
@@ -684,7 +684,43 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* Row 1 col 2: 3 month avg spend */}
+                  {/* 2. Save this month */}
+                  {viewMonth && viewPreviousBalance && (
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">Savings ({viewMonthLabel})</p>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${((): number => {
+                              const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
+                              const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
+                              const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
+                              return changeInBalance - oneOff - interest;
+                            })() >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {(() => {
+                                const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
+                                const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
+                                const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
+                                const s = changeInBalance - oneOff - interest;
+                                return `${s >= 0 ? "+" : ""}$${s.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                        {savingsThisMonthTrend !== null && (
+                          <span className="flex items-center gap-0.5 shrink-0" title={savingsThisMonthTrend === 1 ? "Up vs prior month" : savingsThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
+                            {savingsThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : savingsThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{savingsThisMonthTrend !== null ? "vs prior month" : "Balance change − one-off − interest"}</p>
+                    </div>
+                  )}
+
+                  {/* 3. 3 month avg spend */}
                   {avgSpend3Month !== null && (
                     <div className="glass-card p-4 sm:p-6">
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
@@ -709,17 +745,43 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* Row 1 col 3: 6 month avg spend */}
-                  {avgSpend6Month !== null && (
-                    <div className="glass-card">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-white/10">
-                            <Receipt className="w-5 h-5 text-amber-400/70" strokeWidth={1.5} />
+                  {/* 4. 3 month avg save */}
+                  {avgSave3Month !== null && (
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">6 month avg spend</p>
-                            <p className="text-2xl font-semibold text-white">
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">3 month avg save</p>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave3Month >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {avgSave3Month >= 0 ? "+" : ""}
+                              ${avgSave3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </p>
+                          </div>
+                        </div>
+                        {save3Trend !== null && (
+                          <span className="flex items-center gap-0.5 shrink-0" title={save3Trend === 1 ? "Up vs prior 3m" : save3Trend === -1 ? "Down vs prior 3m" : "Flat"}>
+                            {save3Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save3Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{save3Trend !== null ? "vs prior 3m" : "Avg monthly savings"}</p>
+                    </div>
+                  )}
+
+                  {/* 5. 6 month avg spend */}
+                  {avgSpend6Month !== null && (
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400/70" strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">6 month avg spend</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
                               ${avgSpend6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </div>
@@ -734,7 +796,33 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* Row 1 col 4: Income this month */}
+                  {/* 6. 6 month avg save */}
+                  {avgSave6Month !== null && (
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400/90" strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">6 month avg save</p>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave6Month >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {avgSave6Month >= 0 ? "+" : ""}
+                              ${avgSave6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </p>
+                          </div>
+                        </div>
+                        {save6Trend !== null && (
+                          <span className="flex items-center gap-0.5 shrink-0" title={save6Trend === 1 ? "Up vs prior 6m" : save6Trend === -1 ? "Down vs prior 6m" : "Flat"}>
+                            {save6Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save6Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{save6Trend !== null ? "vs prior 6m" : "Avg monthly savings"}</p>
+                    </div>
+                  )}
+
+                  {/* 7. Income this month */}
                   <div className="glass-card p-4 sm:p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
                       <div className="flex items-center justify-between gap-2 min-w-0">
@@ -778,88 +866,42 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  {/* Row 2 col 1: Savings this month */}
-                  {viewMonth && viewPreviousBalance && (
-                    <div className="glass-card p-4 sm:p-6">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  {/* 8. Net worth */}
+                  <div className="glass-card p-4 sm:p-6">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
+                          <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs sm:text-sm text-muted-foreground">Savings ({viewMonthLabel})</p>
-                          <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${((): number => {
-                            const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
-                            const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
-                            const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
-                            return changeInBalance - oneOff - interest;
-                          })() >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {(() => {
-                              const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
-                              const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
-                              const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
-                              const s = changeInBalance - oneOff - interest;
-                              return `${s >= 0 ? "+" : ""}$${s.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-                            })()}
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            Net Worth{viewMonthLabel !== "this month" ? ` (${viewMonthLabel})` : ""}
+                          </p>
+                          <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
+                            ${(viewMonth ? viewTotalBalance : metrics.totalBalance).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                         </div>
                       </div>
-                      <p className="text-xs text-muted-foreground">Balance change − one-off − interest</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setEditingBalance(null); setIsDrawerOpen(true); }}
+                        className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0"
+                      >
+                        <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        Add balance
+                      </Button>
                     </div>
-                  )}
+                    {metrics.currentBalance?.updated_at ? (
+                      <p className="text-xs text-muted-foreground">
+                        Last updated: {new Date(metrics.currentBalance.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Total across all accounts</p>
+                    )}
+                  </div>
 
-                  {/* Row 2 col 2: 3 month avg save */}
-                  {avgSave3Month !== null && (
-                    <div className="glass-card p-4 sm:p-6">
-                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs sm:text-sm text-muted-foreground">3 month avg save</p>
-                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave3Month >= 0 ? "text-green-400" : "text-red-400"}`}>
-                              {avgSave3Month >= 0 ? "+" : ""}
-                              ${avgSave3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                            </p>
-                          </div>
-                        </div>
-                        {save3Trend !== null && (
-                          <span className="flex items-center gap-0.5 shrink-0" title={save3Trend === 1 ? "Up vs prior 3m" : save3Trend === -1 ? "Down vs prior 3m" : "Flat"}>
-                            {save3Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save3Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{save3Trend !== null ? "vs prior 3m" : "Avg monthly savings"}</p>
-                    </div>
-                  )}
-
-                  {/* Row 2 col 3: 6 month avg save */}
-                  {avgSave6Month !== null && (
-                    <div className="glass-card p-4 sm:p-6">
-                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400/90" strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs sm:text-sm text-muted-foreground">6 month avg save</p>
-                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave6Month >= 0 ? "text-green-400" : "text-red-400"}`}>
-                              {avgSave6Month >= 0 ? "+" : ""}
-                              ${avgSave6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                            </p>
-                          </div>
-                        </div>
-                        {save6Trend !== null && (
-                          <span className="flex items-center gap-0.5 shrink-0" title={save6Trend === 1 ? "Up vs prior 6m" : save6Trend === -1 ? "Down vs prior 6m" : "Flat"}>
-                            {save6Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save6Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{save6Trend !== null ? "vs prior 6m" : "Avg monthly savings"}</p>
-                    </div>
-                  )}
-
-                  {/* Row 2 col 4: Annual Projection */}
+                  {/* 9. Annual Projection */}
                   <div className="glass-card p-4 sm:p-6">
                     <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -886,41 +928,6 @@ export default function DashboardPage() {
                   </div>
                 </motion.div>
               )}
-
-              {/* Net Worth Hero Card — stacks on mobile, responsive amount size */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="glass-card p-4 sm:p-6"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:mb-6">
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">
-                      Net Worth{viewMonthLabel !== "this month" ? ` (${viewMonthLabel})` : ""}
-                    </p>
-                    <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight tabular-nums break-words">
-                      ${(viewMonth ? viewTotalBalance : metrics.totalBalance).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => { setEditingBalance(null); setIsDrawerOpen(true); }}
-                    className="rounded-2xl bg-white text-[#09090b] hover:bg-white/90 w-full sm:w-auto shrink-0"
-                  >
-                    <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                    Quick Add
-                  </Button>
-                </div>
-                {metrics.currentBalance && metrics.currentBalance.updated_at && (
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                    Last updated: {new Date(metrics.currentBalance.updated_at).toLocaleDateString("en-AU", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                )}
-              </motion.div>
 
               {/* Balance Trend Chart */}
               {(balances.length > 0 || bankAccounts.length > 0) && (
