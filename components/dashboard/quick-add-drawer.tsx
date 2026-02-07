@@ -88,12 +88,6 @@ export function QuickAddDrawer({ open, onOpenChange, onSuccess, initialBalance }
     }
   }, [open, fetchBankAccounts]);
 
-  useEffect(() => {
-    if (open && bankAccounts.length === 0 && !isLoadingAccounts) {
-      setShowAddAccountForm(true);
-    }
-  }, [open, bankAccounts.length, isLoadingAccounts]);
-
   // Sync selected account when accounts load or when current selection is no longer valid
   const defaultAccountId =
     initialBalance?.bank_account_id ??
