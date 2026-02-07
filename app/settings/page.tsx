@@ -4,9 +4,10 @@ import { motion } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Settings, Plus, Edit2, Trash2, Building2, Wallet, CreditCard, TrendingUp, X, Save, Loader2, ArrowLeft, Sparkles } from "lucide-react";
+import { Settings, Plus, Edit2, Trash2, Building2, Wallet, CreditCard, TrendingUp, X, Save, Loader2, ArrowLeft, Sparkles, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { addBankAccount, updateBankAccount, deleteBankAccount } from "@/app/actions/bank-accounts";
+import { deleteAllUserData } from "@/app/actions/delete-all-data";
 
 interface BankAccount {
   id: string;
@@ -49,6 +50,10 @@ export default function SettingsPage() {
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [deleteAllConfirmed, setDeleteAllConfirmed] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -143,6 +148,32 @@ export default function SettingsPage() {
     setIsDrawerOpen(false);
     setEditingAccount(null);
     setError(null);
+  }
+
+  function openDeleteAllModal() {
+    setShowDeleteAllModal(true);
+    setDeleteAllConfirmed(false);
+    setDeleteAllError(null);
+  }
+
+  async function handleDeleteAll() {
+    if (!deleteAllConfirmed) return;
+    setIsDeletingAll(true);
+    setDeleteAllError(null);
+    try {
+      const result = await deleteAllUserData();
+      if (result?.error) {
+        setDeleteAllError(result.error);
+        setIsDeletingAll(false);
+        return;
+      }
+      setShowDeleteAllModal(false);
+      router.push("/dashboard");
+    } catch (err) {
+      setDeleteAllError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setIsDeletingAll(false);
+    }
   }
 
   if (isLoading) {
@@ -284,7 +315,105 @@ export default function SettingsPage() {
             </div>
           )}
         </motion.div>
+
+        {/* Delete all data */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mt-8"
+        >
+          <div className="glass-card border-red-500/20 p-6">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-red-500/10 shrink-0">
+                <AlertTriangle className="w-5 h-5 text-red-400" strokeWidth={1.5} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-white mb-1">Delete all data</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Permanently remove all your balances, income, and bank accounts. This cannot be undone.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openDeleteAllModal}
+                  className="rounded-xl border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Delete all data
+                </Button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
+
+      {/* Delete all confirmation modal */}
+      {showDeleteAllModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => !isDeletingAll && setShowDeleteAllModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#09090b] border border-red-500/30 rounded-2xl p-6 max-w-md w-full shadow-xl"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-red-500/20">
+                <AlertTriangle className="w-6 h-6 text-red-400" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-semibold text-white">Delete all data?</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              This will permanently delete <strong className="text-white">all your data</strong>: every balance, every income entry, and every bank account. There are <strong className="text-white">no backups</strong> and <strong className="text-white">no way to get your data back</strong>.
+            </p>
+            <label className="flex items-start gap-3 cursor-pointer mb-6 p-3 rounded-xl bg-white/5 border border-white/10">
+              <input
+                type="checkbox"
+                checked={deleteAllConfirmed}
+                onChange={(e) => setDeleteAllConfirmed(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded border-white/20 bg-white/5 text-red-500 focus:ring-red-500/50"
+              />
+              <span className="text-sm text-muted-foreground">
+                I understand that all my data will be permanently deleted with no backups and no way to recover it.
+              </span>
+            </label>
+            {deleteAllError && (
+              <p className="text-sm text-red-400 mb-4">{deleteAllError}</p>
+            )}
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 rounded-xl border-white/20"
+                onClick={() => !isDeletingAll && setShowDeleteAllModal(false)}
+                disabled={isDeletingAll}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleDeleteAll}
+                disabled={!deleteAllConfirmed || isDeletingAll}
+              >
+                {isDeletingAll ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete everything"
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Add/Edit Drawer */}
       {isDrawerOpen && (
