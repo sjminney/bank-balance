@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
+import Link from "next/link";
 import { signIn, signUp, resetPassword } from "@/app/actions/auth";
 import { Wallet, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -271,14 +272,21 @@ export default function LoginPage() {
         </motion.div>
 
         {/* Footer */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-center text-sm text-muted-foreground mt-8"
+          className="text-center mt-8 space-y-2"
         >
-          Secure authentication powered by Supabase
-        </motion.p>
+          <p className="text-sm text-muted-foreground">
+            <Link href="/help" className="text-white/80 hover:text-white underline underline-offset-2">
+              How to use Bank Balance
+            </Link>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Secure authentication powered by Supabase
+          </p>
+        </motion.div>
       </motion.div>
     </div>
   );

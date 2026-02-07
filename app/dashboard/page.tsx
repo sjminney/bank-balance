@@ -12,7 +12,7 @@ import { BalanceChart } from "@/components/dashboard/balance-chart";
 import { SpendSaveChart } from "@/components/dashboard/spend-save-chart";
 import { QuickAddDrawer } from "@/components/dashboard/quick-add-drawer";
 import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
-import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank } from "lucide-react";
 
 interface MonthlyBalance {
   id: string;
@@ -249,6 +249,16 @@ export default function DashboardPage() {
     [balances]
   );
 
+  // Tables: sort by month desc (newest first)
+  const sortedBalancesByMonthDesc = useMemo(
+    () => [...balances].sort((a, b) => new Date(b.month_year).getTime() - new Date(a.month_year).getTime()),
+    [balances]
+  );
+  const sortedIncomesByMonthDesc = useMemo(
+    () => [...incomes].sort((a, b) => new Date(b.month_year).getTime() - new Date(a.month_year).getTime()),
+    [incomes]
+  );
+
   const interestByMonth = useMemo(() => {
     const map = new Map<string, number>();
     balances.forEach((b) => {
@@ -385,6 +395,26 @@ export default function DashboardPage() {
     return d.toLocaleDateString("en-AU", { month: "long", year: "numeric" });
   })();
 
+  // Trend vs previous month for "this month" cards (1 = up, -1 = down, 0 = flat, null = no data)
+  const spendThisMonthTrend = useMemo(() => {
+    const viewRow = monthlySummaryRows.find((r) => r.month_year === viewMonth);
+    const prevRow = viewPreviousMonth ? monthlySummaryRows.find((r) => r.month_year === viewPreviousMonth) : null;
+    if (viewRow?.expenses == null || prevRow?.expenses == null) return null;
+    return viewRow.expenses > prevRow.expenses ? 1 : viewRow.expenses < prevRow.expenses ? -1 : 0;
+  }, [monthlySummaryRows, viewMonth, viewPreviousMonth]);
+  const incomeThisMonthTrend = useMemo(() => {
+    const viewAmt = incomes.find((i) => i.month_year === viewMonth)?.amount ?? null;
+    const prevAmt = viewPreviousMonth ? (incomes.find((i) => i.month_year === viewPreviousMonth)?.amount ?? null) : null;
+    if (viewAmt == null || prevAmt == null) return null;
+    return viewAmt > prevAmt ? 1 : viewAmt < prevAmt ? -1 : 0;
+  }, [incomes, viewMonth, viewPreviousMonth]);
+  const savingsThisMonthTrend = useMemo(() => {
+    const viewRow = monthlySummaryRows.find((r) => r.month_year === viewMonth);
+    const prevRow = viewPreviousMonth ? monthlySummaryRows.find((r) => r.month_year === viewPreviousMonth) : null;
+    if (viewRow?.savings == null || prevRow?.savings == null) return null;
+    return viewRow.savings > prevRow.savings ? 1 : viewRow.savings < prevRow.savings ? -1 : 0;
+  }, [monthlySummaryRows, viewMonth, viewPreviousMonth]);
+
   // Spend & save chart data: when a month is selected, last 12 months up to that month; else last 12
   const spendSaveChartData = useMemo(() => {
     const rows = monthlySummaryRows.map((r) => ({
@@ -508,6 +538,15 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
             <Button
+              onClick={() => router.push("/help")}
+              variant="ghost"
+              size="sm"
+              className="rounded-2xl text-muted-foreground hover:text-white px-3 md:px-4"
+            >
+              <HelpCircle className="w-4 h-4 sm:mr-2" strokeWidth={1.5} />
+              <span className="hidden sm:inline">Help</span>
+            </Button>
+            <Button
               onClick={() => router.push("/settings")}
               variant="ghost"
               size="sm"
@@ -614,27 +653,34 @@ export default function DashboardPage() {
                 >
                   {/* Row 1 col 1: Spend this month */}
                   {viewMonth && (
-                    <div className="glass-card">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 rounded-xl bg-white/10">
-                          <Receipt className="w-5 h-5 text-amber-400" strokeWidth={1.5} />
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">Spend ({viewMonthLabel})</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
+                              ${((): number => {
+                                const inc = incomes.find((i) => i.month_year === viewMonth);
+                                const income = Number(inc?.amount ?? 0);
+                                const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
+                                const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
+                                const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
+                                const savings = changeInBalance - oneOff - interest;
+                                return income - savings;
+                              })().toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Spend ({viewMonthLabel})</p>
-                          <p className="text-2xl font-semibold text-white">
-                            ${((): number => {
-                              const inc = incomes.find((i) => i.month_year === viewMonth);
-                              const income = Number(inc?.amount ?? 0);
-                              const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
-                              const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
-                              const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
-                              const savings = changeInBalance - oneOff - interest;
-                              return income - savings;
-                            })().toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </p>
-                        </div>
+                        {spendThisMonthTrend !== null && (
+                          <span className="flex items-center gap-0.5 shrink-0" title={spendThisMonthTrend === 1 ? "Up vs prior month" : spendThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
+                            {spendThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spendThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground">Income − savings</p>
+                      <p className="text-xs text-muted-foreground">{spendThisMonthTrend !== null ? "vs prior month" : "Income − savings"}</p>
                     </div>
                   )}
 
@@ -691,19 +737,26 @@ export default function DashboardPage() {
                   {/* Row 1 col 4: Income this month */}
                   <div className="glass-card p-4 sm:p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                          <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" strokeWidth={1.5} />
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" strokeWidth={1.5} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">Income ({viewMonthLabel})</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
+                              ${(incomes.find((i) => i.month_year === (viewMonth ?? incomes[0]?.month_year))?.amount ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </p>
+                            {(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
+                              <p className="text-xs text-muted-foreground">Interest: ${(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm text-muted-foreground">Income ({viewMonthLabel})</p>
-                          <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
-                            ${(incomes.find((i) => i.month_year === (viewMonth ?? incomes[0]?.month_year))?.amount ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                          </p>
-                          {(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
-                            <p className="text-xs text-muted-foreground">Interest: ${(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-                          )}
-                        </div>
+                        {incomeThisMonthTrend !== null && (
+                          <span className="flex items-center gap-0.5 shrink-0" title={incomeThisMonthTrend === 1 ? "Up vs prior month" : incomeThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
+                            {incomeThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : incomeThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          </span>
+                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -760,7 +813,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">3 month avg save</p>
@@ -786,7 +839,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400/90" strokeWidth={1.5} />
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400/90" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">6 month avg save</p>
@@ -808,20 +861,27 @@ export default function DashboardPage() {
 
                   {/* Row 2 col 4: Annual Projection */}
                   <div className="glass-card p-4 sm:p-6">
-                    <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                      <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                        <Target className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
+                    <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                          <Target className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-muted-foreground">Annual Projection</p>
+                          <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${displayProjection >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {displayProjection >= 0 ? "+" : ""}
+                            ${displayProjection.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground">Annual Projection</p>
-                        <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${displayProjection >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {displayProjection >= 0 ? "+" : ""}
-                          ${displayProjection.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </p>
-                      </div>
+                      {save12Trend !== null && (
+                        <span className="flex items-center gap-0.5 shrink-0" title={save12Trend === 1 ? "Up vs prior 12m" : save12Trend === -1 ? "Down vs prior 12m" : "Flat"}>
+                          {save12Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save12Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {avgSave12Month != null ? "12 month avg save × 12" : "Avg monthly savings × 12"}
+                      {save12Trend !== null ? "vs prior 12m" : avgSave12Month != null ? "12 month avg save × 12" : "Avg monthly savings × 12"}
                     </p>
                   </div>
                 </motion.div>
@@ -1077,7 +1137,7 @@ export default function DashboardPage() {
                 </div>
                 {balances.length > 0 ? (
                   <div className="space-y-4">
-                    {(balancesListExpanded ? balances : balances.slice(0, 5)).map((balance) => (
+                    {(balancesListExpanded ? sortedBalancesByMonthDesc : sortedBalancesByMonthDesc.slice(0, 5)).map((balance) => (
                     <div
                       key={balance.id}
                       className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
@@ -1132,7 +1192,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
-                    {balances.length > 5 && (
+                    {sortedBalancesByMonthDesc.length > 5 && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1147,7 +1207,7 @@ export default function DashboardPage() {
                         ) : (
                           <>
                             <Plus className="w-4 h-4 mr-2" />
-                            Show more ({balances.length - 5} more)
+                            Show more ({sortedBalancesByMonthDesc.length - 5} more)
                           </>
                         )}
                       </Button>
@@ -1178,7 +1238,7 @@ export default function DashboardPage() {
                 </p>
                 {incomes.length > 0 ? (
                   <div className="space-y-3">
-                    {(incomeListExpanded ? incomes : incomes.slice(0, 5)).map((income) => {
+                    {(incomeListExpanded ? sortedIncomesByMonthDesc : sortedIncomesByMonthDesc.slice(0, 5)).map((income) => {
                       const idx = sortedMonthKeys.indexOf(income.month_year);
                       const prevKey = idx >= 0 && idx < sortedMonthKeys.length - 1 ? sortedMonthKeys[idx + 1] : null;
                       const isOpeningMonth = prevKey === null;
@@ -1246,7 +1306,7 @@ export default function DashboardPage() {
                         </div>
                       );
                     })}
-                    {incomes.length > 5 && (
+                    {sortedIncomesByMonthDesc.length > 5 && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1261,7 +1321,7 @@ export default function DashboardPage() {
                         ) : (
                           <>
                             <Plus className="w-4 h-4 mr-2" />
-                            Show more ({incomes.length - 5} more)
+                            Show more ({sortedIncomesByMonthDesc.length - 5} more)
                           </>
                         )}
                       </Button>
