@@ -659,7 +659,7 @@ export default function DashboardPage() {
                 </motion.div>
               )}
 
-              {/* Metrics — order: Spend, Save, 3M spend, 3M save, 6M spend, 6M save, Income, Net worth, Annual Projection */}
+              {/* Metrics — order: Spend, Save, 3M spend, 3M save, 6M spend, 6M save, Income, Bank balance, Annual Projection */}
               {(balances.length > 0 || incomes.length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -869,7 +869,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  {/* 8. Net worth */}
+                  {/* 8. Bank balance */}
                   <div className="glass-card p-4 sm:p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -878,7 +878,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm text-muted-foreground">
-                            Net Worth{viewMonthLabel !== "this month" ? ` (${viewMonthLabel})` : ""}
+                            Bank Balance{viewMonthLabel !== "this month" ? ` (${viewMonthLabel})` : ""}
                           </p>
                           <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
                             ${(viewMonth ? viewTotalBalance : metrics.totalBalance).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
