@@ -12,7 +12,7 @@ import { BalanceChart } from "@/components/dashboard/balance-chart";
 import { SpendSaveChart } from "@/components/dashboard/spend-save-chart";
 import { QuickAddDrawer } from "@/components/dashboard/quick-add-drawer";
 import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
-import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle, X } from "lucide-react";
 
 interface MonthlyBalance {
   id: string;
@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const [balancesListExpanded, setBalancesListExpanded] = useState(false);
   const [incomeListExpanded, setIncomeListExpanded] = useState(false);
   const [selectedViewMonth, setSelectedViewMonth] = useState<string | null>(null);
+  const [spendingWarningDismissed, setSpendingWarningDismissed] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -438,6 +439,17 @@ export default function DashboardPage() {
     return spend3Trend === 1 || save3Trend === -1; // spend up or savings down lately
   }, [selectedViewMonth, withExpensesView.length, spend3Trend, save3Trend]);
 
+  // Persist dismiss in session so it stays dismissed for this tab/session
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = sessionStorage.getItem("dashboardSpendingWarningDismissed");
+    if (stored === "1") setSpendingWarningDismissed(true);
+  }, []);
+  function dismissSpendingWarning() {
+    setSpendingWarningDismissed(true);
+    if (typeof window !== "undefined") sessionStorage.setItem("dashboardSpendingWarningDismissed", "1");
+  }
+
   // Spend & save chart data: when a month is selected, last 12 months up to that month; else last 12
   const spendSaveChartData = useMemo(() => {
     const rows = monthlySummaryRows.map((r) => ({
@@ -667,14 +679,14 @@ export default function DashboardPage() {
               )}
 
               {/* Gentle nudge when spending is rising or savings slipping lately */}
-              {showSpendingRisingWarning && (
+              {showSpendingRisingWarning && !spendingWarningDismissed && (
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20"
                 >
                   <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" strokeWidth={1.5} />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground flex-1 min-w-0">
                     <span className="font-medium text-amber-200">Heads up —</span>{" "}
                     {spend3Trend === 1 && save3Trend === -1
                       ? "Your spending has been a bit higher lately and savings a bit lower compared to the previous 3 months. Small tweaks can help keep you on track."
@@ -682,6 +694,14 @@ export default function DashboardPage() {
                         ? "Your spending has been a bit higher lately compared to the previous 3 months. Small tweaks can help keep you on track."
                         : "Your savings have been a bit lower lately compared to the previous 3 months. Small tweaks can help keep you on track."}
                   </p>
+                  <button
+                    type="button"
+                    onClick={dismissSpendingWarning}
+                    className="p-1.5 rounded-lg text-amber-400/80 hover:text-amber-200 hover:bg-amber-500/20 transition-colors shrink-0"
+                    aria-label="Dismiss warning"
+                  >
+                    <X className="w-4 h-4" strokeWidth={1.5} />
+                  </button>
                 </motion.div>
               )}
 
