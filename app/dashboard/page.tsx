@@ -12,7 +12,7 @@ import { BalanceChart } from "@/components/dashboard/balance-chart";
 import { SpendSaveChart } from "@/components/dashboard/spend-save-chart";
 import { QuickAddDrawer } from "@/components/dashboard/quick-add-drawer";
 import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
-import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle } from "lucide-react";
 
 interface MonthlyBalance {
   id: string;
@@ -431,6 +431,13 @@ export default function DashboardPage() {
   const spendPctOfIncome = viewMonthIncome > 0 ? (viewMonthSpend / viewMonthIncome) * 100 : null;
   const savePctOfIncome = viewMonthIncome > 0 ? (viewMonthSave / viewMonthIncome) * 100 : null;
 
+  // Gentle warning when viewing latest: spending has been rising or savings slipping vs prior 3 months
+  const showSpendingRisingWarning = useMemo(() => {
+    if (selectedViewMonth !== null) return false; // only when viewing "Latest"
+    if (withExpensesView.length < 6) return false; // need 6 months for 3m vs 3m
+    return spend3Trend === 1 || save3Trend === -1; // spend up or savings down lately
+  }, [selectedViewMonth, withExpensesView.length, spend3Trend, save3Trend]);
+
   // Spend & save chart data: when a month is selected, last 12 months up to that month; else last 12
   const spendSaveChartData = useMemo(() => {
     const rows = monthlySummaryRows.map((r) => ({
@@ -656,6 +663,25 @@ export default function DashboardPage() {
                       );
                     })}
                   </select>
+                </motion.div>
+              )}
+
+              {/* Gentle nudge when spending is rising or savings slipping lately */}
+              {showSpendingRisingWarning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20"
+                >
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-amber-200">Heads up —</span>{" "}
+                    {spend3Trend === 1 && save3Trend === -1
+                      ? "Your spending has been a bit higher lately and savings a bit lower compared to the previous 3 months. Small tweaks can help keep you on track."
+                      : spend3Trend === 1
+                        ? "Your spending has been a bit higher lately compared to the previous 3 months. Small tweaks can help keep you on track."
+                        : "Your savings have been a bit lower lately compared to the previous 3 months. Small tweaks can help keep you on track."}
+                  </p>
                 </motion.div>
               )}
 
