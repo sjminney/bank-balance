@@ -109,11 +109,12 @@ export default function HelpPage() {
             <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
               <li>
                 <strong className="text-white">Add bank accounts</strong> in Settings (e.g. “Everyday”, “Savings”). You can set a type
-                (e.g. savings) and colour.
+                (e.g. savings) and colour. You can also add a new account from the <strong className="text-white">Add balance</strong> flow:
+                when adding a balance, choose “+ Add new account…” from the account dropdown and fill in the details.
               </li>
               <li>
-                <strong className="text-white">Add monthly balances</strong> — use Quick Add on the dashboard or “Add balance” under
-                Accounts. For each month, enter the total balance per account (or combined). Add <strong className="text-white">interest
+                <strong className="text-white">Add monthly balances</strong> — use <strong className="text-white">Add balance</strong> on the
+                Net Worth card or under Accounts. For each month, enter the total balance per account (or combined). Add <strong className="text-white">interest
                 earned</strong> and any <strong className="text-white">one-off deposit</strong> so we can exclude them from spend/savings.
               </li>
               <li>
@@ -140,8 +141,8 @@ export default function HelpPage() {
               What you’ll see on the dashboard
             </h2>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><strong className="text-white">Net Worth</strong> — total of all balances for the selected (or latest) month.</li>
-              <li><strong className="text-white">Spend / Savings (this month)</strong> — as above; use View month to see any month.</li>
+              <li><strong className="text-white">Net Worth</strong> — total of all balances for the selected (or latest) month. Use <strong className="text-white">Add balance</strong> to record a new balance.</li>
+              <li><strong className="text-white">Spend / Savings (this month)</strong> — as above; use View month to see any month. When you have income for that month, we also show <strong className="text-white">% of income</strong> for spend and save.</li>
               <li><strong className="text-white">3m / 6m averages</strong> — average spend and savings over the last 3 or 6 months.</li>
               <li><strong className="text-white">Annual projection</strong> — based on your average monthly savings.</li>
               <li><strong className="text-white">Monthly summary table</strong> — balance, income, spend and savings per month.</li>
