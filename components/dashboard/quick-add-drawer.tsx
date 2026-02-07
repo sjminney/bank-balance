@@ -13,6 +13,7 @@ interface BankAccount {
   bank_name: string | null;
   account_type: string;
   color: string | null;
+  created_at?: string;
 }
 
 export interface MonthlyBalanceForEdit {
@@ -44,9 +45,9 @@ export function QuickAddDrawer({ open, onOpenChange, onSuccess, initialBalance }
     try {
       const { data, error } = await supabase
         .from("bank_accounts")
-        .select("id, name, bank_name, account_type, color")
+        .select("id, name, bank_name, account_type, color, created_at")
         .eq("is_active", true)
-        .order("name", { ascending: true });
+        .order("created_at", { ascending: true });
 
       if (error) {
         console.error("Error fetching accounts:", error);
@@ -103,6 +104,12 @@ export function QuickAddDrawer({ open, onOpenChange, onSuccess, initialBalance }
   const monthValue = initialBalance?.month_year?.slice(0, 7) ?? currentMonth;
   const isEdit = Boolean(initialBalance);
 
+  // Default account: first savings, else first created (list is ordered by created_at asc)
+  const defaultAccountId =
+    initialBalance?.bank_account_id ??
+    (bankAccounts.find((a) => a.account_type === "savings")?.id ?? bankAccounts[0]?.id) ??
+    "";
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange} title={isEdit ? "Edit balance" : "Add Monthly Balance"}>
       <form key={initialBalance?.id ?? "new"} onSubmit={handleSubmit} className="space-y-6">
@@ -123,8 +130,8 @@ export function QuickAddDrawer({ open, onOpenChange, onSuccess, initialBalance }
               id="bank_account_id"
               name="bank_account_id"
               required
-              key={initialBalance?.bank_account_id ?? "none"}
-              defaultValue={initialBalance?.bank_account_id ?? ""}
+              key={initialBalance?.bank_account_id ?? (defaultAccountId || "none")}
+              defaultValue={defaultAccountId}
               className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all [color-scheme:dark]"
               style={{ colorScheme: "dark" }}
             >

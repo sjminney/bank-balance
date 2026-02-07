@@ -2,12 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { signIn, signUp } from "@/app/actions/auth";
+import { signIn, signUp, resetPassword } from "@/app/actions/auth";
 import { Wallet, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -24,9 +25,11 @@ export default function LoginPage() {
     setSuccessMessage(null);
 
     try {
-      const result = isSignUp
-        ? await signUp(formData)
-        : await signIn(formData);
+      const result = showForgotPassword
+        ? await resetPassword(formData)
+        : isSignUp
+          ? await signUp(formData)
+          : await signIn(formData);
 
       if (result?.error) {
         // Check if it's a rate limit error
@@ -115,7 +118,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-3xl font-semibold text-white mb-2">Bank Balance</h1>
           <p className="text-muted-foreground">
-            {isSignUp ? "Create your account" : "Sign in to your account"}
+            {showForgotPassword ? "Reset your password" : isSignUp ? "Create your account" : "Sign in to your account"}
           </p>
         </motion.div>
 
@@ -167,24 +170,39 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-white">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={6}
-                  className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all"
-                  placeholder="••••••••"
-                />
+            {/* Password Field - hide when forgot password */}
+            {!showForgotPassword && (
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium text-white">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required={!showForgotPassword}
+                    minLength={6}
+                    className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div className="text-right">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(true);
+                      setError(null);
+                      setSuccessMessage(null);
+                    }}
+                    className="text-sm text-muted-foreground hover:text-white transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Submit Button */}
             <Button
@@ -195,7 +213,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" strokeWidth={1.5} />
-                  {isSignUp ? "Creating account..." : "Signing in..."}
+                  {showForgotPassword ? "Sending link..." : isSignUp ? "Creating account..." : "Signing in..."}
                 </>
               ) : cooldownSeconds > 0 ? (
                 <>
@@ -204,37 +222,51 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  {isSignUp ? "Create account" : "Sign in"}
+                  {showForgotPassword ? "Send reset link" : isSignUp ? "Create account" : "Sign in"}
                   <ArrowRight className="w-5 h-5 ml-2" strokeWidth={1.5} />
                 </>
               )}
             </Button>
           </form>
 
-          {/* Toggle Sign Up/Sign In */}
+          {/* Toggle Sign Up / Sign In / Back from Forgot */}
           <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(null);
-                setSuccessMessage(null);
-                setCooldownSeconds(0);
-              }}
-              className="text-sm text-muted-foreground hover:text-white transition-colors"
-            >
-              {isSignUp ? (
-                <>
-                  Already have an account?{" "}
-                  <span className="font-medium text-white">Sign in</span>
-                </>
-              ) : (
-                <>
-                  Don&apos;t have an account?{" "}
-                  <span className="font-medium text-white">Sign up</span>
-                </>
-              )}
-            </button>
+            {showForgotPassword ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setError(null);
+                  setSuccessMessage(null);
+                }}
+                className="text-sm text-muted-foreground hover:text-white transition-colors"
+              >
+                Back to <span className="font-medium text-white">Sign in</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                  setSuccessMessage(null);
+                  setCooldownSeconds(0);
+                }}
+                className="text-sm text-muted-foreground hover:text-white transition-colors"
+              >
+                {isSignUp ? (
+                  <>
+                    Already have an account?{" "}
+                    <span className="font-medium text-white">Sign in</span>
+                  </>
+                ) : (
+                  <>
+                    Don&apos;t have an account?{" "}
+                    <span className="font-medium text-white">Sign up</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </motion.div>
 

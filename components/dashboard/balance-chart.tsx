@@ -100,13 +100,17 @@ export function BalanceChart({ data, selectedAccountIds }: BalanceChartProps) {
             tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
           />
           <Tooltip
+            wrapperClassName="chart-tooltip"
             contentStyle={{
               backgroundColor: "rgba(9, 9, 11, 0.95)",
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: "0.5rem",
               color: "#fff",
+              fontSize: "12px",
+              padding: "8px 12px",
             }}
-            labelStyle={{ color: "rgba(255,255,255,0.8)" }}
+            labelStyle={{ color: "rgba(255,255,255,0.8)", fontSize: "12px" }}
+            itemStyle={{ fontSize: "12px" }}
             formatter={(value: number) => [
               `$${value.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
               "Balance",

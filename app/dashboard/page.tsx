@@ -1,19 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { signOut } from "@/app/actions/auth";
 import { deleteMonthlyBalance } from "@/app/actions/balances";
 import { deleteMonthlyIncome } from "@/app/actions/income";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import { BalanceChart } from "@/components/dashboard/balance-chart";
 import { SpendSaveChart } from "@/components/dashboard/spend-save-chart";
 import { QuickAddDrawer } from "@/components/dashboard/quick-add-drawer";
 import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
-import { Pencil, Trash2, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus } from "lucide-react";
 
 interface MonthlyBalance {
   id: string;
@@ -63,6 +62,10 @@ export default function DashboardPage() {
   const [isIncomeDrawerOpen, setIsIncomeDrawerOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<MonthlyIncome | null>(null);
   const [editingBalance, setEditingBalance] = useState<MonthlyBalance | null>(null);
+  const [summaryTableExpanded, setSummaryTableExpanded] = useState(false);
+  const [balancesListExpanded, setBalancesListExpanded] = useState(false);
+  const [incomeListExpanded, setIncomeListExpanded] = useState(false);
+  const [selectedViewMonth, setSelectedViewMonth] = useState<string | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
@@ -304,59 +307,93 @@ export default function DashboardPage() {
     [monthlySummaryRows]
   );
 
-  const avgSpend3Month = withExpenses.length >= 1 ? withExpenses.slice(0, 3).reduce((a, r) => a + r.expenses, 0) / Math.min(3, withExpenses.length) : null;
-  const avgSpend6Month = withExpenses.length >= 1 ? withExpenses.slice(0, 6).reduce((a, r) => a + r.expenses, 0) / Math.min(6, withExpenses.length) : null;
-  const avgSpend12Month = withExpenses.length >= 1 ? withExpenses.slice(0, 12).reduce((a, r) => a + r.expenses, 0) / Math.min(12, withExpenses.length) : null;
+  // When a month is selected, restrict to data up to that month for averages and trends
+  const monthlySummaryRowsView = useMemo(
+    () =>
+      selectedViewMonth
+        ? monthlySummaryRows.filter((r) => r.month_year <= selectedViewMonth)
+        : monthlySummaryRows,
+    [monthlySummaryRows, selectedViewMonth]
+  );
+  const withExpensesView = useMemo(
+    () => monthlySummaryRowsView.filter((r) => r.expenses !== null) as { expenses: number }[],
+    [monthlySummaryRowsView]
+  );
+  const withSavingsView = useMemo(
+    () => monthlySummaryRowsView.filter((r) => r.savings !== null) as { savings: number }[],
+    [monthlySummaryRowsView]
+  );
 
-  const avgSave3Month = withSavings.length >= 1 ? withSavings.slice(0, 3).reduce((a, r) => a + r.savings, 0) / Math.min(3, withSavings.length) : null;
-  const avgSave6Month = withSavings.length >= 1 ? withSavings.slice(0, 6).reduce((a, r) => a + r.savings, 0) / Math.min(6, withSavings.length) : null;
-  const avgSave12Month = withSavings.length >= 1 ? withSavings.slice(0, 12).reduce((a, r) => a + r.savings, 0) / Math.min(12, withSavings.length) : null;
+  const avgSpend3Month = withExpensesView.length >= 1 ? withExpensesView.slice(0, 3).reduce((a, r) => a + r.expenses, 0) / Math.min(3, withExpensesView.length) : null;
+  const avgSpend6Month = withExpensesView.length >= 1 ? withExpensesView.slice(0, 6).reduce((a, r) => a + r.expenses, 0) / Math.min(6, withExpensesView.length) : null;
+  const avgSpend12Month = withExpensesView.length >= 1 ? withExpensesView.slice(0, 12).reduce((a, r) => a + r.expenses, 0) / Math.min(12, withExpensesView.length) : null;
+
+  const avgSave3Month = withSavingsView.length >= 1 ? withSavingsView.slice(0, 3).reduce((a, r) => a + r.savings, 0) / Math.min(3, withSavingsView.length) : null;
+  const avgSave6Month = withSavingsView.length >= 1 ? withSavingsView.slice(0, 6).reduce((a, r) => a + r.savings, 0) / Math.min(6, withSavingsView.length) : null;
+  const avgSave12Month = withSavingsView.length >= 1 ? withSavingsView.slice(0, 12).reduce((a, r) => a + r.savings, 0) / Math.min(12, withSavingsView.length) : null;
 
   // Trend: 1 = up, -1 = down, 0 = flat, null = not enough data (compare recent period vs prior period)
   const spend3Trend = useMemo(() => {
-    if (withExpenses.length < 6) return null;
-    const r = withExpenses.slice(0, 3).reduce((a, x) => a + x.expenses, 0) / 3;
-    const p = withExpenses.slice(3, 6).reduce((a, x) => a + x.expenses, 0) / 3;
+    if (withExpensesView.length < 6) return null;
+    const r = withExpensesView.slice(0, 3).reduce((a, x) => a + x.expenses, 0) / 3;
+    const p = withExpensesView.slice(3, 6).reduce((a, x) => a + x.expenses, 0) / 3;
     return r > p ? 1 : r < p ? -1 : 0;
-  }, [withExpenses]);
+  }, [withExpensesView]);
   const spend6Trend = useMemo(() => {
-    if (withExpenses.length < 12) return null;
-    const r = withExpenses.slice(0, 6).reduce((a, x) => a + x.expenses, 0) / 6;
-    const p = withExpenses.slice(6, 12).reduce((a, x) => a + x.expenses, 0) / 6;
+    if (withExpensesView.length < 12) return null;
+    const r = withExpensesView.slice(0, 6).reduce((a, x) => a + x.expenses, 0) / 6;
+    const p = withExpensesView.slice(6, 12).reduce((a, x) => a + x.expenses, 0) / 6;
     return r > p ? 1 : r < p ? -1 : 0;
-  }, [withExpenses]);
+  }, [withExpensesView]);
   const save3Trend = useMemo(() => {
-    if (withSavings.length < 6) return null;
-    const r = withSavings.slice(0, 3).reduce((a, x) => a + x.savings, 0) / 3;
-    const p = withSavings.slice(3, 6).reduce((a, x) => a + x.savings, 0) / 3;
+    if (withSavingsView.length < 6) return null;
+    const r = withSavingsView.slice(0, 3).reduce((a, x) => a + x.savings, 0) / 3;
+    const p = withSavingsView.slice(3, 6).reduce((a, x) => a + x.savings, 0) / 3;
     return r > p ? 1 : r < p ? -1 : 0;
-  }, [withSavings]);
+  }, [withSavingsView]);
   const save6Trend = useMemo(() => {
-    if (withSavings.length < 12) return null;
-    const r = withSavings.slice(0, 6).reduce((a, x) => a + x.savings, 0) / 6;
-    const p = withSavings.slice(6, 12).reduce((a, x) => a + x.savings, 0) / 6;
+    if (withSavingsView.length < 12) return null;
+    const r = withSavingsView.slice(0, 6).reduce((a, x) => a + x.savings, 0) / 6;
+    const p = withSavingsView.slice(6, 12).reduce((a, x) => a + x.savings, 0) / 6;
     return r > p ? 1 : r < p ? -1 : 0;
-  }, [withSavings]);
+  }, [withSavingsView]);
   const save12Trend = useMemo(() => {
-    if (withSavings.length < 24) return null;
-    const r = withSavings.slice(0, 12).reduce((a, x) => a + x.savings, 0) / 12;
-    const p = withSavings.slice(12, 24).reduce((a, x) => a + x.savings, 0) / 12;
+    if (withSavingsView.length < 24) return null;
+    const r = withSavingsView.slice(0, 12).reduce((a, x) => a + x.savings, 0) / 12;
+    const p = withSavingsView.slice(12, 24).reduce((a, x) => a + x.savings, 0) / 12;
     return r > p ? 1 : r < p ? -1 : 0;
-  }, [withSavings]);
+  }, [withSavingsView]);
 
   // Annual projection: use 12 month avg save × 12 when available so it matches that card
   const displayProjection = avgSave12Month != null ? avgSave12Month * 12 : metrics.annualProjection;
 
-  // Spend & save chart data (last 12 months with spend/save)
-  const spendSaveChartData = useMemo(
-    () =>
-      monthlySummaryRows.map((r) => ({
-        month_year: r.month_year,
-        spend: r.expenses,
-        save: r.savings,
-      })),
-    [monthlySummaryRows]
-  );
+  // View month for cards/chart: selected or latest
+  const viewMonth = selectedViewMonth ?? metrics.currentMonthYear;
+  const viewPreviousMonth = viewMonth ? sortedMonthKeys[sortedMonthKeys.indexOf(viewMonth) + 1] ?? null : null;
+  const viewTotalBalance = viewMonth ? (monthlyTotalByMonth.get(viewMonth) ?? 0) : 0;
+  const viewPreviousBalance = viewPreviousMonth
+    ? { month_year: viewPreviousMonth, balance: monthlyTotalByMonth.get(viewPreviousMonth) ?? 0 }
+    : null;
+  const currentMonthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+  const viewMonthLabel = viewMonth
+    ? viewMonth === currentMonthYear
+      ? "this month"
+      : new Date(viewMonth + "-01").toLocaleDateString("en-AU", { month: "long", year: "numeric" })
+    : "this month";
+
+  // Spend & save chart data: when a month is selected, last 12 months up to that month; else last 12
+  const spendSaveChartData = useMemo(() => {
+    const rows = monthlySummaryRows.map((r) => ({
+      month_year: r.month_year,
+      spend: r.expenses,
+      save: r.savings,
+    }));
+    if (selectedViewMonth) {
+      const filtered = rows.filter((r) => r.month_year <= selectedViewMonth);
+      return filtered.slice(0, 12);
+    }
+    return rows.slice(0, 12);
+  }, [monthlySummaryRows, selectedViewMonth]);
 
   async function refreshBalances() {
     try {
@@ -452,45 +489,47 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] p-4 md:p-8">
+    <div className="min-h-screen bg-[#09090b] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header — stacks on mobile for better fit */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-8 flex items-center justify-between"
+          className="mb-6 md:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
-          <div>
-            <h1 className="text-4xl font-semibold text-white mb-2">Bank Balance</h1>
-            <p className="text-muted-foreground">Track your finances across all accounts</p>
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-white mb-1 md:mb-2 truncate">Bank Balance</h1>
+            <p className="text-sm text-muted-foreground hidden sm:block">Track your finances across all accounts</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <Button
               onClick={() => router.push("/settings")}
               variant="ghost"
-              className="rounded-2xl text-muted-foreground hover:text-white"
+              size="sm"
+              className="rounded-2xl text-muted-foreground hover:text-white px-3 md:px-4"
             >
-              <Settings className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Settings
+              <Settings className="w-4 h-4 sm:mr-2" strokeWidth={1.5} />
+              <span className="hidden sm:inline">Settings</span>
             </Button>
             <Button
               onClick={handleSignOut}
               variant="ghost"
-              className="rounded-2xl text-muted-foreground hover:text-white"
+              size="sm"
+              className="rounded-2xl text-muted-foreground hover:text-white px-3 md:px-4"
             >
-              <LogOut className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              Sign Out
+              <LogOut className="w-4 h-4 sm:mr-2" strokeWidth={1.5} />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </motion.header>
 
-        {/* Navigation Tabs */}
+        {/* Navigation Tabs — compact on mobile */}
         <motion.nav
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex gap-2 mb-8"
+          className="flex flex-wrap gap-2 mb-6 md:mb-8"
         >
           {[
             { id: "overview", label: "Overview" },
@@ -500,7 +539,7 @@ export default function DashboardPage() {
             <motion.button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as typeof selectedTab)}
-              className={`px-6 py-3 rounded-2xl font-medium transition-all ${
+              className={`px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-medium transition-all text-sm sm:text-base ${
                 selectedTab === tab.id
                   ? "glass-card text-white"
                   : "text-muted-foreground hover:text-white hover:bg-white/5"
@@ -523,30 +562,63 @@ export default function DashboardPage() {
         >
           {selectedTab === "overview" && (
             <div className="space-y-6">
+              {/* Month selector: view cards and chart for a specific month */}
+              {(sortedMonthKeys.length > 0 || (incomes.length > 0 && monthlySummaryRows.length > 0)) && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex flex-wrap items-center gap-3"
+                >
+                  <label htmlFor="view-month" className="text-sm font-medium text-muted-foreground">
+                    View month
+                  </label>
+                  <select
+                    id="view-month"
+                    value={selectedViewMonth ?? ""}
+                    onChange={(e) => setSelectedViewMonth(e.target.value || null)}
+                    className="rounded-xl bg-white/5 border border-white/10 text-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 [color-scheme:dark]"
+                    style={{ colorScheme: "dark" }}
+                  >
+                    <option value="" style={{ backgroundColor: "#09090b", color: "#ffffff" }}>
+                      Latest
+                    </option>
+                    {monthlySummaryRows.map((row) => (
+                      <option
+                        key={row.month_year}
+                        value={row.month_year}
+                        style={{ backgroundColor: "#09090b", color: "#ffffff" }}
+                      >
+                        {new Date(row.month_year).toLocaleDateString("en-AU", { month: "long", year: "numeric" })}
+                      </option>
+                    ))}
+                  </select>
+                </motion.div>
+              )}
+
               {/* Metrics — Row 1: this month spend, 3m spend, 6m spend, income. Row 2: this month save, 3m save, 6m save, projection */}
               {(balances.length > 0 || incomes.length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
                 >
                   {/* Row 1 col 1: Spend this month */}
-                  {metrics.currentMonthYear && (
+                  {viewMonth && (
                     <div className="glass-card">
                       <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 rounded-xl bg-white/10">
                           <Receipt className="w-5 h-5 text-amber-400" strokeWidth={1.5} />
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground">Spend (this month)</p>
+                          <p className="text-sm text-muted-foreground">Spend ({viewMonthLabel})</p>
                           <p className="text-2xl font-semibold text-white">
                             ${((): number => {
-                              const inc = incomes.find((i) => i.month_year === metrics.currentMonthYear);
+                              const inc = incomes.find((i) => i.month_year === viewMonth);
                               const income = Number(inc?.amount ?? 0);
-                              const interest = interestByMonth.get(metrics.currentMonthYear ?? "") ?? 0;
-                              const oneOff = oneOffByMonth.get(metrics.currentMonthYear ?? "") ?? 0;
-                              const changeInBalance = metrics.totalBalance - (metrics.previousBalance?.balance ?? 0);
+                              const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
+                              const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
+                              const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
                               const savings = changeInBalance - oneOff - interest;
                               return income - savings;
                             })().toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
@@ -559,22 +631,22 @@ export default function DashboardPage() {
 
                   {/* Row 1 col 2: 3 month avg spend */}
                   {avgSpend3Month !== null && (
-                    <div className="glass-card">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-white/10">
-                            <Receipt className="w-5 h-5 text-amber-400/80" strokeWidth={1.5} />
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400/80" strokeWidth={1.5} />
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">3 month avg spend</p>
-                            <p className="text-2xl font-semibold text-white">
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">3 month avg spend</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
                               ${avgSpend3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </div>
                         </div>
                         {spend3Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={spend3Trend === 1 ? "Up vs prior 3m" : spend3Trend === -1 ? "Down vs prior 3m" : "Flat"}>
-                            {spend3Trend === 1 ? <ChevronUp className="w-4 h-4 text-red-400" /> : spend3Trend === -1 ? <ChevronDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {spend3Trend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spend3Trend === -1 ? <TrendingDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -599,7 +671,7 @@ export default function DashboardPage() {
                         </div>
                         {spend6Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={spend6Trend === 1 ? "Up vs prior 6m" : spend6Trend === -1 ? "Down vs prior 6m" : "Flat"}>
-                            {spend6Trend === 1 ? <ChevronUp className="w-4 h-4 text-red-400" /> : spend6Trend === -1 ? <ChevronDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {spend6Trend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spend6Trend === -1 ? <TrendingDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -608,19 +680,19 @@ export default function DashboardPage() {
                   )}
 
                   {/* Row 1 col 4: Income this month */}
-                  <div className="glass-card">
-                    <div className="flex items-center justify-between gap-3 mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-xl bg-white/10">
-                          <Banknote className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
+                  <div className="glass-card p-4 sm:p-6">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                          <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" strokeWidth={1.5} />
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Income (this month)</p>
-                          <p className="text-2xl font-semibold text-white">
-                            ${(incomes.find((i) => i.month_year === (metrics.currentMonthYear ?? incomes[0]?.month_year))?.amount ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-muted-foreground">Income ({viewMonthLabel})</p>
+                          <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
+                            ${(incomes.find((i) => i.month_year === (viewMonth ?? incomes[0]?.month_year))?.amount ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
-                          {(interestByMonth.get(metrics.currentMonthYear ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
-                            <p className="text-xs text-muted-foreground">Interest: ${(interestByMonth.get(metrics.currentMonthYear ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                          {(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
+                            <p className="text-xs text-muted-foreground">Interest: ${(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                           )}
                         </div>
                       </div>
@@ -634,31 +706,31 @@ export default function DashboardPage() {
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {(metrics.currentMonthYear ?? incomes[0]?.month_year)
-                        ? new Date(metrics.currentMonthYear ?? incomes[0]?.month_year ?? "").toLocaleDateString("en-AU", { month: "long", year: "numeric" })
+                      {(viewMonth ?? incomes[0]?.month_year)
+                        ? new Date(viewMonth ?? incomes[0]?.month_year ?? "").toLocaleDateString("en-AU", { month: "long", year: "numeric" })
                         : "Record income separately from balances (no account)."}
                     </p>
                   </div>
 
                   {/* Row 2 col 1: Savings this month */}
-                  {metrics.currentMonthYear && metrics.previousBalance && (
-                    <div className="glass-card">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-2 rounded-xl bg-white/10">
-                          <TrendingUp className="w-5 h-5 text-green-400" strokeWidth={1.5} />
+                  {viewMonth && viewPreviousBalance && (
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                        <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Savings (this month)</p>
-                          <p className={`text-2xl font-semibold ${((): number => {
-                            const interest = interestByMonth.get(metrics.currentMonthYear ?? "") ?? 0;
-                            const oneOff = oneOffByMonth.get(metrics.currentMonthYear ?? "") ?? 0;
-                            const changeInBalance = metrics.totalBalance - (metrics.previousBalance?.balance ?? 0);
+                        <div className="min-w-0">
+                          <p className="text-xs sm:text-sm text-muted-foreground">Savings ({viewMonthLabel})</p>
+                          <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${((): number => {
+                            const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
+                            const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
+                            const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
                             return changeInBalance - oneOff - interest;
                           })() >= 0 ? "text-green-400" : "text-red-400"}`}>
                             {(() => {
-                              const interest = interestByMonth.get(metrics.currentMonthYear ?? "") ?? 0;
-                              const oneOff = oneOffByMonth.get(metrics.currentMonthYear ?? "") ?? 0;
-                              const changeInBalance = metrics.totalBalance - (metrics.previousBalance?.balance ?? 0);
+                              const interest = interestByMonth.get(viewMonth ?? "") ?? 0;
+                              const oneOff = oneOffByMonth.get(viewMonth ?? "") ?? 0;
+                              const changeInBalance = viewTotalBalance - (viewPreviousBalance?.balance ?? 0);
                               const s = changeInBalance - oneOff - interest;
                               return `${s >= 0 ? "+" : ""}$${s.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
                             })()}
@@ -671,15 +743,15 @@ export default function DashboardPage() {
 
                   {/* Row 2 col 2: 3 month avg save */}
                   {avgSave3Month !== null && (
-                    <div className="glass-card">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-white/10">
-                            <TrendingUp className="w-5 h-5 text-green-400" strokeWidth={1.5} />
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">3 month avg save</p>
-                            <p className={`text-2xl font-semibold ${avgSave3Month >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">3 month avg save</p>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave3Month >= 0 ? "text-green-400" : "text-red-400"}`}>
                               {avgSave3Month >= 0 ? "+" : ""}
                               ${avgSave3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
@@ -687,7 +759,7 @@ export default function DashboardPage() {
                         </div>
                         {save3Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={save3Trend === 1 ? "Up vs prior 3m" : save3Trend === -1 ? "Down vs prior 3m" : "Flat"}>
-                            {save3Trend === 1 ? <ChevronUp className="w-4 h-4 text-green-400" /> : save3Trend === -1 ? <ChevronDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {save3Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save3Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -697,15 +769,15 @@ export default function DashboardPage() {
 
                   {/* Row 2 col 3: 6 month avg save */}
                   {avgSave6Month !== null && (
-                    <div className="glass-card">
-                      <div className="flex items-center justify-between gap-2 mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-xl bg-white/10">
-                            <TrendingUp className="w-5 h-5 text-green-400/90" strokeWidth={1.5} />
+                    <div className="glass-card p-4 sm:p-6">
+                      <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-400/90" strokeWidth={1.5} />
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">6 month avg save</p>
-                            <p className={`text-2xl font-semibold ${avgSave6Month >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">6 month avg save</p>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave6Month >= 0 ? "text-green-400" : "text-red-400"}`}>
                               {avgSave6Month >= 0 ? "+" : ""}
                               ${avgSave6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
@@ -713,7 +785,7 @@ export default function DashboardPage() {
                         </div>
                         {save6Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={save6Trend === 1 ? "Up vs prior 6m" : save6Trend === -1 ? "Down vs prior 6m" : "Flat"}>
-                            {save6Trend === 1 ? <ChevronUp className="w-4 h-4 text-green-400" /> : save6Trend === -1 ? <ChevronDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {save6Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save6Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -722,14 +794,14 @@ export default function DashboardPage() {
                   )}
 
                   {/* Row 2 col 4: Annual Projection */}
-                  <div className="glass-card">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2 rounded-xl bg-white/10">
-                        <Target className="w-5 h-5 text-blue-400" strokeWidth={1.5} />
+                  <div className="glass-card p-4 sm:p-6">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                      <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                        <Target className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Annual Projection</p>
-                        <p className={`text-2xl font-semibold ${displayProjection >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground">Annual Projection</p>
+                        <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${displayProjection >= 0 ? "text-green-400" : "text-red-400"}`}>
                           {displayProjection >= 0 ? "+" : ""}
                           ${displayProjection.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </p>
@@ -742,30 +814,32 @@ export default function DashboardPage() {
                 </motion.div>
               )}
 
-              {/* Net Worth Hero Card */}
+              {/* Net Worth Hero Card — stacks on mobile, responsive amount size */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.3 }}
-                className="glass-card"
+                className="glass-card p-4 sm:p-6"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Net Worth</p>
-                    <h1 className="text-5xl md:text-6xl font-semibold text-white tracking-tight">
-                      ${metrics.totalBalance.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </h1>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:mb-6">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1 sm:mb-2">
+                      Net Worth{viewMonth ? ` (${new Date(viewMonth).toLocaleDateString("en-AU", { month: "long", year: "numeric" })})` : ""}
+                    </p>
+                    <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-white tracking-tight tabular-nums break-words">
+                      ${(viewMonth ? viewTotalBalance : metrics.totalBalance).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </p>
                   </div>
                   <Button
                     onClick={() => { setEditingBalance(null); setIsDrawerOpen(true); }}
-                    className="rounded-2xl bg-white text-[#09090b] hover:bg-white/90"
+                    className="rounded-2xl bg-white text-[#09090b] hover:bg-white/90 w-full sm:w-auto shrink-0"
                   >
                     <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Quick Add
                   </Button>
                 </div>
                 {metrics.currentBalance && metrics.currentBalance.updated_at && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                     Last updated: {new Date(metrics.currentBalance.updated_at).toLocaleDateString("en-AU", {
                       day: "numeric",
                       month: "long",
@@ -781,10 +855,10 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="glass-card"
+                  className="glass-card p-4 sm:p-6"
                 >
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">12-Month Trend</h2>
+                  <div className="mb-4 sm:mb-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">12-Month Trend</h2>
                     {bankAccounts.length > 0 ? (
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground">Filter by account:</p>
@@ -865,11 +939,11 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45 }}
-                  className="glass-card"
+                  className="glass-card p-4 sm:p-6"
                 >
-                  <h2 className="text-xl font-semibold text-white mb-4">Spend & Save</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Monthly spend and save with 3‑month averages and trendlines (last 12 months).
+                  <h2 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Spend & Save</h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
+                    Monthly spend and save with trendlines (last 12 months).
                   </p>
                   <SpendSaveChart data={spendSaveChartData} />
                 </motion.div>
@@ -881,9 +955,9 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="glass-card overflow-hidden"
+                  className="glass-card overflow-hidden p-4 sm:p-6"
                 >
-                  <h2 className="text-lg font-semibold text-white mb-4">Monthly summary</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Monthly summary</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -896,7 +970,7 @@ export default function DashboardPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {monthlySummaryRows.map((row) => (
+                        {(summaryTableExpanded ? monthlySummaryRows : monthlySummaryRows.slice(0, 5)).map((row) => (
                           <tr key={row.month_year} className="border-b border-white/5 hover:bg-white/5">
                             <td className="py-3 pr-4 text-white whitespace-nowrap">
                               {new Date(row.month_year).toLocaleDateString("en-AU", { month: "short", year: "numeric" })}
@@ -925,6 +999,26 @@ export default function DashboardPage() {
                       </tbody>
                     </table>
                   </div>
+                  {monthlySummaryRows.length > 5 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSummaryTableExpanded((e) => !e)}
+                      className="mt-3 w-full rounded-xl text-muted-foreground hover:text-white"
+                    >
+                      {summaryTableExpanded ? (
+                        <>
+                          <Minus className="w-4 h-4 mr-2" />
+                          Show less
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Show more ({monthlySummaryRows.length - 5} more)
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </motion.div>
               )}
 
@@ -956,13 +1050,13 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="glass-card"
+                className="glass-card p-4 sm:p-6"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-semibold text-white">Monthly Balances</h2>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-2xl font-semibold text-white">Monthly Balances</h2>
                   <Button
                     onClick={() => { setEditingBalance(null); setIsDrawerOpen(true); }}
-                    className="rounded-2xl bg-white text-[#09090b] hover:bg-white/90"
+                    className="rounded-2xl bg-white text-[#09090b] hover:bg-white/90 w-full sm:w-auto"
                   >
                     <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Add balance
@@ -970,7 +1064,7 @@ export default function DashboardPage() {
                 </div>
                 {balances.length > 0 ? (
                   <div className="space-y-4">
-                    {balances.map((balance) => (
+                    {(balancesListExpanded ? balances : balances.slice(0, 5)).map((balance) => (
                     <div
                       key={balance.id}
                       className="p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
@@ -1025,6 +1119,26 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
+                    {balances.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setBalancesListExpanded((e) => !e)}
+                        className="w-full rounded-xl text-muted-foreground hover:text-white mt-2"
+                      >
+                        {balancesListExpanded ? (
+                          <>
+                            <Minus className="w-4 h-4 mr-2" />
+                            Show less
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Show more ({balances.length - 5} more)
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-muted-foreground">No balance records yet</p>
@@ -1034,10 +1148,10 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="glass-card"
+                className="glass-card p-4 sm:p-6"
               >
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-semibold text-white">Income by month</h2>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-2xl font-semibold text-white">Income by month</h2>
                   <Button
                     onClick={() => { setEditingIncome(null); setIsIncomeDrawerOpen(true); }}
                     className="rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white"
@@ -1051,7 +1165,7 @@ export default function DashboardPage() {
                 </p>
                 {incomes.length > 0 ? (
                   <div className="space-y-3">
-                    {incomes.map((income) => {
+                    {(incomeListExpanded ? incomes : incomes.slice(0, 5)).map((income) => {
                       const idx = sortedMonthKeys.indexOf(income.month_year);
                       const prevKey = idx >= 0 && idx < sortedMonthKeys.length - 1 ? sortedMonthKeys[idx + 1] : null;
                       const isOpeningMonth = prevKey === null;
@@ -1119,6 +1233,26 @@ export default function DashboardPage() {
                         </div>
                       );
                     })}
+                    {incomes.length > 5 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIncomeListExpanded((e) => !e)}
+                        className="w-full rounded-xl text-muted-foreground hover:text-white mt-2"
+                      >
+                        {incomeListExpanded ? (
+                          <>
+                            <Minus className="w-4 h-4 mr-2" />
+                            Show less
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Show more ({incomes.length - 5} more)
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-muted-foreground">No income recorded yet. Click &quot;Add income&quot; to record income and interest for a month.</p>
@@ -1131,9 +1265,9 @@ export default function DashboardPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="glass-card"
+              className="glass-card p-4 sm:p-6"
             >
-              <h2 className="text-2xl font-semibold text-white mb-6">Analytics</h2>
+              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-4 sm:mb-6">Analytics</h2>
               <p className="text-muted-foreground">Analytics dashboard coming soon...</p>
             </motion.div>
           )}

@@ -68,3 +68,22 @@ select:focus option:checked {
   background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
+
+/* Chart tooltips: compact on mobile / iOS */
+.chart-tooltip .recharts-default-tooltip {
+  max-width: 220px;
+}
+@media (max-width: 768px) {
+  .chart-tooltip .recharts-default-tooltip {
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+    max-width: 180px;
+  }
+  .chart-tooltip .recharts-default-tooltip .recharts-tooltip-label {
+    font-size: 11px !important;
+    margin-bottom: 2px;
+  }
+  .chart-tooltip .recharts-default-tooltip .recharts-tooltip-item {
+    font-size: 11px !important;
+  }
+}

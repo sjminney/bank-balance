@@ -36,15 +36,6 @@ function linearTrend(values: (number | null)[]): (number | null)[] {
   return values.map((v, i) => (v != null ? slope * i + intercept : null));
 }
 
-function rollingAvg(values: (number | null)[], window: number): (number | null)[] {
-  return values.map((_, i) => {
-    const start = Math.max(0, i - window + 1);
-    const slice = values.slice(start, i + 1).filter((v): v is number => v != null);
-    if (slice.length === 0) return null;
-    return slice.reduce((a, c) => a + c, 0) / slice.length;
-  });
-}
-
 export function SpendSaveChart({ data }: SpendSaveChartProps) {
   const chartData = useMemo(() => {
     const sorted = [...data]
@@ -55,8 +46,6 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
 
     const spendValues = last12.map((d) => d.spend);
     const saveValues = last12.map((d) => d.save);
-    const spendAvg3 = rollingAvg(spendValues, 3);
-    const saveAvg3 = rollingAvg(saveValues, 3);
     const spendTrend = linearTrend(spendValues);
     const saveTrend = linearTrend(saveValues);
 
@@ -65,8 +54,6 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
       fullDate: d.month_year,
       spend: d.spend ?? undefined,
       save: d.save ?? undefined,
-      spendAvg3: spendAvg3[i] ?? undefined,
-      saveAvg3: saveAvg3[i] ?? undefined,
       spendTrend: spendTrend[i] ?? undefined,
       saveTrend: saveTrend[i] ?? undefined,
     }));
@@ -100,29 +87,31 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
             tickFormatter={(value) => `$${Math.abs(value) >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}`}
           />
           <Tooltip
+            wrapperClassName="chart-tooltip"
             contentStyle={{
               backgroundColor: "rgba(9, 9, 11, 0.95)",
               border: "1px solid rgba(255,255,255,0.1)",
               borderRadius: "0.5rem",
               color: "#fff",
+              fontSize: "12px",
+              padding: "8px 12px",
             }}
-            labelStyle={{ color: "rgba(255,255,255,0.8)" }}
+            labelStyle={{ color: "rgba(255,255,255,0.8)", fontSize: "12px" }}
+            itemStyle={{ fontSize: "12px" }}
             formatter={(value: number, name: string) => [
               `$${value.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-              name === "spend" ? "Spend" : name === "save" ? "Save" : name === "spendAvg3" ? "Spend (3m avg)" : name === "saveAvg3" ? "Save (3m avg)" : name === "spendTrend" ? "Spend trend" : "Save trend",
+              name === "spend" ? "Spend" : name === "save" ? "Save" : name === "spendTrend" ? "Spend trend" : "Save trend",
             ]}
           />
           <Legend
             wrapperStyle={{ fontSize: "12px" }}
             formatter={(value) =>
-              value === "spend" ? "Spend" : value === "save" ? "Save" : value === "spendAvg3" ? "Spend 3m avg" : value === "saveAvg3" ? "Save 3m avg" : value === "spendTrend" ? "Spend trend" : "Save trend"
+              value === "spend" ? "Spend" : value === "save" ? "Save" : value === "spendTrend" ? "Spend trend" : "Save trend"
             }
           />
           <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="2 2" />
           <Line type="monotone" dataKey="spend" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 3 }} activeDot={{ r: 5 }} name="spend" connectNulls />
           <Line type="monotone" dataKey="save" stroke="#22c55e" strokeWidth={2} dot={{ fill: "#22c55e", r: 3 }} activeDot={{ r: 5 }} name="save" connectNulls />
-          <Line type="monotone" dataKey="spendAvg3" stroke="#f59e0b" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="spendAvg3" connectNulls />
-          <Line type="monotone" dataKey="saveAvg3" stroke="#22c55e" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="saveAvg3" connectNulls />
           <Line type="monotone" dataKey="spendTrend" stroke="rgba(245,158,11,0.6)" strokeWidth={1} strokeDasharray="3 3" dot={false} name="spendTrend" connectNulls />
           <Line type="monotone" dataKey="saveTrend" stroke="rgba(34,197,94,0.6)" strokeWidth={1} strokeDasharray="3 3" dot={false} name="saveTrend" connectNulls />
         </LineChart>

@@ -83,3 +83,20 @@ export async function signOut() {
   revalidatePath("/", "layout");
   redirect("/login");
 }
+
+export async function resetPassword(formData: FormData) {
+  const supabase = await createClient();
+  const email = formData.get("email") as string;
+  if (!email?.trim()) {
+    return { error: "Please enter your email address." };
+  }
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+  if (error) {
+    return { error: error.message };
+  }
+  return {
+    success: true,
+    message: "Check your email for a link to reset your password. If you don't see it, check your spam folder.",
+  };
+}
