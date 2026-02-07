@@ -200,7 +200,8 @@ export default function SettingsPage() {
           <Button
             onClick={() => router.push("/dashboard")}
             variant="ghost"
-            className="mb-4 rounded-2xl text-muted-foreground hover:text-white"
+            size="sm"
+            className="mb-4 rounded-xl text-muted-foreground hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" strokeWidth={1.5} />
             Back to Dashboard
@@ -221,11 +222,12 @@ export default function SettingsPage() {
           transition={{ delay: 0.1 }}
           className="glass-card"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
             <h2 className="text-2xl font-semibold text-white">Bank Accounts</h2>
             <Button
               onClick={openAddDrawer}
-              className="rounded-2xl bg-white text-[#09090b] hover:bg-white/90"
+              size="sm"
+              className="rounded-xl bg-white text-[#09090b] hover:bg-white/90 shrink-0"
             >
               <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
               Add Account
@@ -240,7 +242,8 @@ export default function SettingsPage() {
               <p className="text-muted-foreground mb-4">No bank accounts yet</p>
               <Button
                 onClick={openAddDrawer}
-                className="rounded-2xl"
+                size="sm"
+                className="rounded-xl bg-white text-[#09090b] hover:bg-white/90"
               >
                 <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
                 Add Your First Account
@@ -290,12 +293,12 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 shrink-0">
                         <Button
                           onClick={() => openEditDrawer(account)}
                           variant="ghost"
                           size="icon"
-                          className="rounded-xl"
+                          className="h-9 w-9 rounded-xl"
                         >
                           <Edit2 className="w-4 h-4" strokeWidth={1.5} />
                         </Button>
@@ -303,7 +306,7 @@ export default function SettingsPage() {
                           onClick={() => handleDelete(account.id)}
                           variant="ghost"
                           size="icon"
-                          className="rounded-xl text-red-400 hover:text-red-300"
+                          className="h-9 w-9 rounded-xl text-red-400 hover:text-red-300"
                         >
                           <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                         </Button>
@@ -337,7 +340,7 @@ export default function SettingsPage() {
                   variant="outline"
                   size="sm"
                   onClick={openDeleteAllModal}
-                  className="rounded-xl border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                  className="rounded-xl border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 shrink-0"
                 >
                   <Trash2 className="w-4 h-4 mr-2" strokeWidth={1.5} />
                   Delete all data
@@ -389,7 +392,8 @@ export default function SettingsPage() {
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1 rounded-xl border-white/20"
+                size="sm"
+                className="flex-1 rounded-xl border-white/20 h-9"
                 onClick={() => !isDeletingAll && setShowDeleteAllModal(false)}
                 disabled={isDeletingAll}
               >
@@ -397,7 +401,8 @@ export default function SettingsPage() {
               </Button>
               <Button
                 type="button"
-                className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                size="sm"
+                className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white h-9"
                 onClick={handleDeleteAll}
                 disabled={!deleteAllConfirmed || isDeletingAll}
               >
@@ -607,16 +612,17 @@ export default function SettingsPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full rounded-2xl bg-white text-[#09090b] hover:bg-white/90 font-medium h-12"
+                  size="sm"
+                  className="w-full rounded-xl bg-white text-[#09090b] hover:bg-white/90 font-medium h-9"
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" strokeWidth={1.5} />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" strokeWidth={1.5} />
                       {editingAccount ? "Updating..." : "Adding..."}
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5 mr-2" strokeWidth={1.5} />
+                      <Save className="w-4 h-4 mr-2" strokeWidth={1.5} />
                       {editingAccount ? "Update Account" : "Add Account"}
                     </>
                   )}
