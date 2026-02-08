@@ -51,7 +51,6 @@ function formatDataLabel(value: number): string {
 export function SpendSaveChart({ data }: SpendSaveChartProps) {
   const [showSpend, setShowSpend] = useState(true);
   const [showSave, setShowSave] = useState(false);
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const chartData = useMemo(() => {
     const sorted = [...data]
@@ -117,15 +116,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
 
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={displayData}
-            margin={{ top: 24, right: 10, left: 0, bottom: 5 }}
-            activeIndex={activeIndex ?? undefined}
-            onMouseMove={(state) => {
-              if (state?.activeTooltipIndex != null) setActiveIndex(state.activeTooltipIndex);
-            }}
-            onMouseLeave={() => setActiveIndex(null)}
-          >
+          <LineChart data={displayData} margin={{ top: 24, right: 10, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis
               dataKey="month"
@@ -155,7 +146,6 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
                 `$${value.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
                 name === "spend" ? "Spend" : name === "save" ? "Save" : name === "spendTrend" ? "Spend trend" : "Save trend",
               ]}
-              active={activeIndex != null ? true : undefined}
             />
             <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="2 2" />
             <Line
@@ -164,7 +154,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               stroke={showSpend ? SPEND_COLOR : "transparent"}
               strokeWidth={2}
               dot={showSpend ? { fill: SPEND_COLOR, r: 3 } : false}
-              activeDot={showSpend ? { r: 5, onClick: (_: unknown, p: { index?: number; payload?: (typeof displayData)[number] }) => { const idx = p?.index ?? (p?.payload ? displayData.findIndex((d) => d.month === p.payload!.month) : -1); if (idx >= 0) setActiveIndex(idx); } } : false}
+              activeDot={showSpend ? { r: 5 } : false}
               name="spend"
               connectNulls
             >
@@ -189,7 +179,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               stroke={showSave ? SAVE_COLOR : "transparent"}
               strokeWidth={2}
               dot={showSave ? { fill: SAVE_COLOR, r: 3 } : false}
-              activeDot={showSave ? { r: 5, onClick: (_: unknown, p: { index?: number; payload?: (typeof displayData)[number] }) => { const idx = p?.index ?? (p?.payload ? displayData.findIndex((d) => d.month === p.payload!.month) : -1); if (idx >= 0) setActiveIndex(idx); } } : false}
+              activeDot={showSave ? { r: 5 } : false}
               name="save"
               connectNulls
             >
