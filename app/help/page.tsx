@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, Wallet, Banknote, TrendingUp, Target, HelpCircle, Settings, AlertTriangle } from "lucide-react";
+import { ArrowLeft, BookOpen, Wallet, Banknote, TrendingUp, Target, HelpCircle, Settings, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function HelpPage() {
@@ -169,6 +169,27 @@ export default function HelpPage() {
               inflate your “savings” or hide how much you actually spent. Interest is handled the same way: it’s recorded and then
               excluded from the main savings figure so you see your true frugal savings and real spend.
             </p>
+          </motion.section>
+
+          {/* Tips to save */}
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+            className="glass rounded-2xl p-6"
+          >
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
+              <Sparkles className="w-5 h-5 text-amber-400" strokeWidth={1.5} />
+              Tips to save
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              We’ve put together a short blog with ideas to help you spend less and save more — from tracking your spending to pay-yourself-first and high-interest savings. Written with the Australian market in mind but useful anywhere.
+            </p>
+            <Link href="/blog">
+              <Button variant="outline" size="sm" className="rounded-xl border-white/20 text-muted-foreground hover:text-white">
+                Read tips
+              </Button>
+            </Link>
           </motion.section>
 
           {/* Settings & delete all data */}

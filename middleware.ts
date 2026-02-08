@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect dashboard and settings routes - redirect to login if not authenticated
+  // Only /dashboard and /settings require login. Public routes: /, /login, /signup, /help, /blog (and /blog/*)
   if (!user && (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/settings"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

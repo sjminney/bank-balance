@@ -12,7 +12,9 @@ import { BalanceChart } from "@/components/dashboard/balance-chart";
 import { SpendSaveChart } from "@/components/dashboard/spend-save-chart";
 import { QuickAddDrawer } from "@/components/dashboard/quick-add-drawer";
 import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
-import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle, X, Sparkles } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle, X, Sparkles, Download, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { exportToExcel } from "@/lib/export-excel";
 
 interface MonthlyBalance {
   id: string;
@@ -580,6 +582,16 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground hidden sm:block">Track your finances across all accounts</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
+            <Link href="/blog">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-2xl text-muted-foreground hover:text-white px-3 md:px-4"
+              >
+                <BookOpen className="w-4 h-4 sm:mr-2" strokeWidth={1.5} />
+                <span className="hidden sm:inline">Tips</span>
+              </Button>
+            </Link>
             <Button
               onClick={() => router.push("/help")}
               variant="ghost"
@@ -609,6 +621,33 @@ export default function DashboardPage() {
             </Button>
           </div>
         </motion.header>
+
+        {/* Quick actions: Add balance & Add income */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.05 }}
+          className="flex flex-wrap items-center gap-2 mb-4 md:mb-6"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setEditingBalance(null); setIsDrawerOpen(true); }}
+            className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0"
+          >
+            <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+            Add balance
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setEditingIncome(null); setIsIncomeDrawerOpen(true); }}
+            className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0"
+          >
+            <Banknote className="w-4 h-4 mr-2" strokeWidth={1.5} />
+            Add income
+          </Button>
+        </motion.div>
 
         {/* Navigation Tabs — compact on mobile */}
         <motion.nav
@@ -1421,10 +1460,115 @@ export default function DashboardPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="glass-card p-4 sm:p-6"
+              className="space-y-6"
             >
-              <h2 className="text-lg sm:text-2xl font-semibold text-white mb-4 sm:mb-6">Analytics</h2>
-              <p className="text-muted-foreground">Analytics dashboard coming soon...</p>
+              <div className="glass-card p-4 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                  <h2 className="text-lg sm:text-2xl font-semibold text-white">Analytics</h2>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      exportToExcel(
+                        balances,
+                        incomes,
+                        monthlySummaryRows,
+                        "bank-balance-export"
+                      )
+                    }
+                    className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0"
+                  >
+                    <Download className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                    Export to Excel
+                  </Button>
+                </div>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Export includes Summary by month, Balances by account, and Income. Dates use Australian format (e.g. Jan 2025).
+                </p>
+
+                {/* Metric cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  {avgSpend3Month != null && (
+                    <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg spend (3 months)</p>
+                      <p className="text-xl font-semibold text-white">
+                        ${avgSpend3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                  )}
+                  {avgSpend6Month != null && (
+                    <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg spend (6 months)</p>
+                      <p className="text-xl font-semibold text-white">
+                        ${avgSpend6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                  )}
+                  {avgSave3Month != null && (
+                    <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg save (3 months)</p>
+                      <p className="text-xl font-semibold text-emerald-400">
+                        ${avgSave3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                  )}
+                  {avgSave6Month != null && (
+                    <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg save (6 months)</p>
+                      <p className="text-xl font-semibold text-emerald-400">
+                        ${avgSave6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Last 12 months summary table */}
+                {monthlySummaryRows.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-white mb-3">Last 12 months</h3>
+                    <div className="overflow-x-auto rounded-xl border border-white/10">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-white/10 text-left text-muted-foreground">
+                            <th className="p-3 font-medium">Month</th>
+                            <th className="p-3 font-medium text-right">Balance</th>
+                            <th className="p-3 font-medium text-right">Income</th>
+                            <th className="p-3 font-medium text-right">Spend</th>
+                            <th className="p-3 font-medium text-right">Save</th>
+                            <th className="p-3 font-medium text-right">Save %</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthlySummaryRows.slice(0, 12).map((r) => (
+                            <tr key={r.month_year} className="border-b border-white/5">
+                              <td className="p-3 text-white">
+                                {new Date(r.month_year.slice(0, 7) + "-01").toLocaleDateString("en-AU", { month: "short", year: "numeric" })}
+                              </td>
+                              <td className="p-3 text-right text-white">
+                                ${r.balance.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </td>
+                              <td className="p-3 text-right text-white">
+                                ${r.income.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              </td>
+                              <td className="p-3 text-right text-white">
+                                {r.expenses != null ? `$${r.expenses.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
+                              </td>
+                              <td className="p-3 text-right text-emerald-400">
+                                {r.savings != null ? `$${r.savings.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
+                              </td>
+                              <td className="p-3 text-right text-muted-foreground">
+                                {r.income > 0 && r.savings != null
+                                  ? `${((r.savings / r.income) * 100).toFixed(0)}%`
+                                  : "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </motion.div>
