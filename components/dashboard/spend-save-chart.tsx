@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  LabelList,
 } from "recharts";
 import { useMemo } from "react";
 
@@ -41,9 +42,16 @@ const SAVE_COLOR = "#22c55e";
 const SPEND_TREND_COLOR = "rgba(245,158,11,0.6)";
 const SAVE_TREND_COLOR = "rgba(34,197,94,0.6)";
 
+function formatDataLabel(value: number): string {
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  if (value <= -1000) return `-${(Math.abs(value) / 1000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
 export function SpendSaveChart({ data }: SpendSaveChartProps) {
   const [showSpend, setShowSpend] = useState(true);
   const [showSave, setShowSave] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const chartData = useMemo(() => {
     const sorted = [...data]
@@ -109,7 +117,15 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
 
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={displayData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+          <LineChart
+            data={displayData}
+            margin={{ top: 24, right: 10, left: 0, bottom: 5 }}
+            activeIndex={activeIndex ?? undefined}
+            onMouseMove={(state) => {
+              if (state?.activeTooltipIndex != null) setActiveIndex(state.activeTooltipIndex);
+            }}
+            onMouseLeave={() => setActiveIndex(null)}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis
               dataKey="month"
@@ -139,6 +155,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
                 `$${value.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
                 name === "spend" ? "Spend" : name === "save" ? "Save" : name === "spendTrend" ? "Spend trend" : "Save trend",
               ]}
+              active={activeIndex != null ? true : undefined}
             />
             <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="2 2" />
             <Line
@@ -147,10 +164,14 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               stroke={showSpend ? SPEND_COLOR : "transparent"}
               strokeWidth={2}
               dot={showSpend ? { fill: SPEND_COLOR, r: 3 } : false}
-              activeDot={showSpend ? { r: 5 } : false}
+              activeDot={showSpend ? { r: 5, onClick: (_: unknown, p: { index?: number; payload?: (typeof displayData)[number] }) => { const idx = p?.index ?? (p?.payload ? displayData.findIndex((d) => d.month === p.payload!.month) : -1); if (idx >= 0) setActiveIndex(idx); } } : false}
               name="spend"
               connectNulls
-            />
+            >
+              {showSpend && (
+                <LabelList dataKey="spend" position="top" fill="rgba(255,255,255,0.8)" fontSize={11} formatter={formatDataLabel} />
+              )}
+            </Line>
             <Line
               type="monotone"
               dataKey="spendTrend"
@@ -168,10 +189,14 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               stroke={showSave ? SAVE_COLOR : "transparent"}
               strokeWidth={2}
               dot={showSave ? { fill: SAVE_COLOR, r: 3 } : false}
-              activeDot={showSave ? { r: 5 } : false}
+              activeDot={showSave ? { r: 5, onClick: (_: unknown, p: { index?: number; payload?: (typeof displayData)[number] }) => { const idx = p?.index ?? (p?.payload ? displayData.findIndex((d) => d.month === p.payload!.month) : -1); if (idx >= 0) setActiveIndex(idx); } } : false}
               name="save"
               connectNulls
-            />
+            >
+              {showSave && (
+                <LabelList dataKey="save" position="top" fill="rgba(255,255,255,0.8)" fontSize={11} formatter={formatDataLabel} />
+              )}
+            </Line>
             <Line
               type="monotone"
               dataKey="saveTrend"
