@@ -141,18 +141,48 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               ]}
             />
             <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" strokeDasharray="2 2" />
-            {showSpend && (
-              <>
-                <Line type="monotone" dataKey="spend" stroke={SPEND_COLOR} strokeWidth={2} dot={{ fill: SPEND_COLOR, r: 3 }} activeDot={{ r: 5 }} name="spend" connectNulls />
-                <Line type="monotone" dataKey="spendTrend" stroke={SPEND_TREND_COLOR} strokeWidth={1} strokeDasharray="3 3" dot={false} name="spendTrend" connectNulls legendType="none" />
-              </>
-            )}
-            {showSave && (
-              <>
-                <Line type="monotone" dataKey="save" stroke={SAVE_COLOR} strokeWidth={2} dot={{ fill: SAVE_COLOR, r: 3 }} activeDot={{ r: 5 }} name="save" connectNulls />
-                <Line type="monotone" dataKey="saveTrend" stroke={SAVE_TREND_COLOR} strokeWidth={1} strokeDasharray="3 3" dot={false} name="saveTrend" connectNulls legendType="none" />
-              </>
-            )}
+            <Line
+              type="monotone"
+              dataKey="spend"
+              stroke={showSpend ? SPEND_COLOR : "transparent"}
+              strokeWidth={2}
+              dot={showSpend ? { fill: SPEND_COLOR, r: 3 } : false}
+              activeDot={showSpend ? { r: 5 } : false}
+              name="spend"
+              connectNulls
+            />
+            <Line
+              type="monotone"
+              dataKey="spendTrend"
+              stroke={showSpend ? SPEND_TREND_COLOR : "transparent"}
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              dot={false}
+              name="spendTrend"
+              connectNulls
+              legendType="none"
+            />
+            <Line
+              type="monotone"
+              dataKey="save"
+              stroke={showSave ? SAVE_COLOR : "transparent"}
+              strokeWidth={2}
+              dot={showSave ? { fill: SAVE_COLOR, r: 3 } : false}
+              activeDot={showSave ? { r: 5 } : false}
+              name="save"
+              connectNulls
+            />
+            <Line
+              type="monotone"
+              dataKey="saveTrend"
+              stroke={showSave ? SAVE_TREND_COLOR : "transparent"}
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              dot={false}
+              name="saveTrend"
+              connectNulls
+              legendType="none"
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>
