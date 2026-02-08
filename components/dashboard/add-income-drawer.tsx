@@ -141,7 +141,7 @@ export function AddIncomeDrawer({
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-2xl bg-emerald-600 text-white hover:bg-emerald-500 font-medium h-12"
+          className="w-full rounded-2xl bg-sky-600 text-white hover:bg-sky-500 font-medium h-12"
         >
           {isSubmitting ? (
             <>

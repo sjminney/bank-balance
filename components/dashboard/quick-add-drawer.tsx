@@ -18,7 +18,7 @@ const ACCOUNT_TYPES = [
   { value: "fun", label: "Fun" },
 ];
 
-const ACCOUNT_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
+const ACCOUNT_COLORS = ["#38bdf8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
 
 interface BankAccount {
   id: string;

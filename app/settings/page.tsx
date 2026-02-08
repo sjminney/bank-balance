@@ -33,7 +33,7 @@ const ACCOUNT_TYPES = [
 ];
 
 const ACCOUNT_COLORS = [
-  "#3b82f6", // Blue
+  "#38bdf8", // Sky blue
   "#10b981", // Green
   "#f59e0b", // Amber
   "#ef4444", // Red

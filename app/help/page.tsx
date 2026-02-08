@@ -36,7 +36,7 @@ export default function HelpPage() {
             className="glass rounded-2xl p-6"
           >
             <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
-              <BookOpen className="w-5 h-5 text-blue-400" strokeWidth={1.5} />
+              <BookOpen className="w-5 h-5 text-sky-400" strokeWidth={1.5} />
               What is Bank Balance for?
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -103,7 +103,7 @@ export default function HelpPage() {
             className="glass rounded-2xl p-6"
           >
             <h2 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
-              <Wallet className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
+              <Wallet className="w-5 h-5 text-sky-400" strokeWidth={1.5} />
               Getting started
             </h2>
             <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">

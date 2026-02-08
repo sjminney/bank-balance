@@ -150,7 +150,7 @@ export function BalanceChart({ data, selectedAccountIds }: BalanceChartProps) {
             stroke="url(#balanceGradient)"
             strokeWidth={3}
             dot={{ fill: "#60a5fa", r: 4 }}
-            activeDot={{ r: 6, fill: "#3b82f6" }}
+            activeDot={{ r: 6, fill: "#38bdf8" }}
             filter="url(#glow)"
           >
             <LabelList

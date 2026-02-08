@@ -37,10 +37,11 @@ function linearTrend(values: (number | null)[]): (number | null)[] {
   return values.map((v, i) => (v != null ? slope * i + intercept : null));
 }
 
+/* Harmonious on dark: sky blue (save) + amber (spend) – color-blind friendly, work together */
 const SPEND_COLOR = "#f59e0b";
-const SAVE_COLOR = "#22c55e";
+const SAVE_COLOR = "#38bdf8";
 const SPEND_TREND_COLOR = "rgba(245,158,11,0.6)";
-const SAVE_TREND_COLOR = "rgba(34,197,94,0.6)";
+const SAVE_TREND_COLOR = "rgba(56,189,248,0.6)";
 
 function formatDataLabel(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
@@ -133,7 +134,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
           type="button"
           onClick={() => setShowSave((s) => !s)}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            showSave ? "bg-green-500/20 text-green-400 border border-green-500/30" : "bg-white/5 text-muted-foreground border border-white/10 hover:bg-white/10"
+            showSave ? "bg-sky-500/20 text-sky-400 border border-sky-500/30" : "bg-white/5 text-muted-foreground border border-white/10 hover:bg-white/10"
           }`}
         >
           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: SAVE_COLOR }} />

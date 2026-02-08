@@ -15,6 +15,7 @@ import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
 import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle, X, Sparkles, Download, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { exportToExcel } from "@/lib/export-excel";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface MonthlyBalance {
   id: string;
@@ -344,6 +345,22 @@ export default function DashboardPage() {
   const avgSave3Month = withSavingsView.length >= 1 ? withSavingsView.slice(0, 3).reduce((a, r) => a + r.savings, 0) / Math.min(3, withSavingsView.length) : null;
   const avgSave6Month = withSavingsView.length >= 1 ? withSavingsView.slice(0, 6).reduce((a, r) => a + r.savings, 0) / Math.min(6, withSavingsView.length) : null;
   const avgSave12Month = withSavingsView.length >= 1 ? withSavingsView.slice(0, 12).reduce((a, r) => a + r.savings, 0) / Math.min(12, withSavingsView.length) : null;
+
+  // Avg save % and spend % of income (last 12 months) for Analytics pie chart
+  const analyticsSaveSpendPie = useMemo(() => {
+    const rows = monthlySummaryRows.filter((r) => r.income > 0 && r.savings != null && r.expenses != null).slice(0, 12);
+    if (rows.length === 0) return null;
+    const totalIncome = rows.reduce((a, r) => a + r.income, 0);
+    const totalSpend = rows.reduce((a, r) => a + (r.expenses ?? 0), 0);
+    const totalSave = rows.reduce((a, r) => a + (r.savings ?? 0), 0);
+    if (totalIncome <= 0) return null;
+    const spendPct = (totalSpend / totalIncome) * 100;
+    const savePct = (totalSave / totalIncome) * 100;
+    return [
+      { name: "Spend", value: Math.round(spendPct * 10) / 10, color: "#f59e0b" },
+      { name: "Save", value: Math.round(savePct * 10) / 10, color: "#38bdf8" },
+    ];
+  }, [monthlySummaryRows]);
 
   // Trend: 1 = up, -1 = down, 0 = flat, null = not enough data (compare recent period vs prior period)
   const spend3Trend = useMemo(() => {
@@ -757,11 +774,11 @@ export default function DashboardPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20"
+                  className="flex items-start gap-3 p-4 rounded-xl bg-sky-500/10 border border-sky-500/20"
                 >
-                  <Sparkles className="w-5 h-5 text-green-400 shrink-0 mt-0.5" strokeWidth={1.5} />
+                  <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" strokeWidth={1.5} />
                   <p className="text-sm text-muted-foreground flex-1 min-w-0">
-                    <span className="font-medium text-green-200">Nice going —</span>{" "}
+                    <span className="font-medium text-sky-200">Nice going —</span>{" "}
                     {save3Trend === 1 && spend3Trend === -1
                       ? "Your savings have been up and spending down compared to the previous 3 months. You're on track."
                       : save3Trend === 1
@@ -796,7 +813,7 @@ export default function DashboardPage() {
                         </div>
                         {spendThisMonthTrend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={spendThisMonthTrend === 1 ? "Up vs prior month" : spendThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
-                            {spendThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spendThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {spendThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spendThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-sky-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -813,18 +830,18 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">Savings ({viewMonthLabel})</p>
-                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${viewMonthSave >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${viewMonthSave >= 0 ? "text-sky-400" : "text-red-400"}`}>
                               {viewMonthSave >= 0 ? "+" : ""}${viewMonthSave.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </div>
                         </div>
                         {savingsThisMonthTrend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={savingsThisMonthTrend === 1 ? "Up vs prior month" : savingsThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
-                            {savingsThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : savingsThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {savingsThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-sky-400" /> : savingsThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -852,7 +869,7 @@ export default function DashboardPage() {
                         </div>
                         {spend3Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={spend3Trend === 1 ? "Up vs prior 3m" : spend3Trend === -1 ? "Down vs prior 3m" : "Flat"}>
-                            {spend3Trend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spend3Trend === -1 ? <TrendingDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {spend3Trend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spend3Trend === -1 ? <TrendingDown className="w-4 h-4 text-sky-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -866,11 +883,11 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" strokeWidth={1.5} />
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">3 month avg save</p>
-                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave3Month >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave3Month >= 0 ? "text-sky-400" : "text-red-400"}`}>
                               {avgSave3Month >= 0 ? "+" : ""}
                               ${avgSave3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
@@ -878,7 +895,7 @@ export default function DashboardPage() {
                         </div>
                         {save3Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={save3Trend === 1 ? "Up vs prior 3m" : save3Trend === -1 ? "Down vs prior 3m" : "Flat"}>
-                            {save3Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save3Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {save3Trend === 1 ? <TrendingUp className="w-4 h-4 text-sky-400" /> : save3Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -903,7 +920,7 @@ export default function DashboardPage() {
                         </div>
                         {spend6Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={spend6Trend === 1 ? "Up vs prior 6m" : spend6Trend === -1 ? "Down vs prior 6m" : "Flat"}>
-                            {spend6Trend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spend6Trend === -1 ? <TrendingDown className="w-4 h-4 text-green-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {spend6Trend === 1 ? <TrendingUp className="w-4 h-4 text-red-400" /> : spend6Trend === -1 ? <TrendingDown className="w-4 h-4 text-sky-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -917,11 +934,11 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                           <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-green-400/90" strokeWidth={1.5} />
+                            <PiggyBank className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400/90" strokeWidth={1.5} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs sm:text-sm text-muted-foreground">6 month avg save</p>
-                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave6Month >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${avgSave6Month >= 0 ? "text-sky-400" : "text-red-400"}`}>
                               {avgSave6Month >= 0 ? "+" : ""}
                               ${avgSave6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
@@ -929,7 +946,7 @@ export default function DashboardPage() {
                         </div>
                         {save6Trend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={save6Trend === 1 ? "Up vs prior 6m" : save6Trend === -1 ? "Down vs prior 6m" : "Flat"}>
-                            {save6Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save6Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                            {save6Trend === 1 ? <TrendingUp className="w-4 h-4 text-sky-400" /> : save6Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                           </span>
                         )}
                       </div>
@@ -942,7 +959,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                          <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" strokeWidth={1.5} />
+                          <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm text-muted-foreground">Income ({viewMonthLabel})</p>
@@ -953,7 +970,7 @@ export default function DashboardPage() {
                       </div>
                       {incomeThisMonthTrend !== null && (
                         <span className="flex items-center gap-0.5 shrink-0" title={incomeThisMonthTrend === 1 ? "Up vs prior month" : incomeThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
-                          {incomeThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : incomeThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          {incomeThisMonthTrend === 1 ? <TrendingUp className="w-4 h-4 text-sky-400" /> : incomeThisMonthTrend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                         </span>
                       )}
                     </div>
@@ -973,7 +990,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                          <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
+                          <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0 overflow-hidden">
                           <p className="text-xs sm:text-sm text-muted-foreground">
@@ -999,11 +1016,11 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                          <Target className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
+                          <Target className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs sm:text-sm text-muted-foreground">Annual Projection</p>
-                          <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${displayProjection >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${displayProjection >= 0 ? "text-sky-400" : "text-red-400"}`}>
                             {displayProjection >= 0 ? "+" : ""}
                             ${displayProjection.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
@@ -1011,7 +1028,7 @@ export default function DashboardPage() {
                       </div>
                       {save12Trend !== null && (
                         <span className="flex items-center gap-0.5 shrink-0" title={save12Trend === 1 ? "Up vs prior 12m" : save12Trend === -1 ? "Down vs prior 12m" : "Flat"}>
-                          {save12Trend === 1 ? <TrendingUp className="w-4 h-4 text-green-400" /> : save12Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
+                          {save12Trend === 1 ? <TrendingUp className="w-4 h-4 text-sky-400" /> : save12Trend === -1 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-muted-foreground" />}
                         </span>
                       )}
                     </div>
@@ -1090,7 +1107,7 @@ export default function DashboardPage() {
                               >
                                 <div
                                   className="w-2.5 h-2.5 rounded-full"
-                                  style={{ backgroundColor: account.color || "#3b82f6" }}
+                                  style={{ backgroundColor: account.color || "#38bdf8" }}
                                 />
                                 {account.name}
                                 {isSelected && (
@@ -1151,7 +1168,7 @@ export default function DashboardPage() {
                             <td className="py-3 pr-4 text-right text-white tabular-nums">
                               ${row.balance.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </td>
-                            <td className="py-3 pr-4 text-right text-emerald-400 tabular-nums">
+                            <td className="py-3 pr-4 text-right text-sky-400 tabular-nums">
                               ${row.income.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </td>
                             <td className="py-3 pr-4 text-right text-amber-400 tabular-nums">
@@ -1161,7 +1178,7 @@ export default function DashboardPage() {
                               {row.isOpeningMonth ? (
                                 <span className="text-muted-foreground">—</span>
                               ) : (
-                                <span className={row.savings! >= 0 ? "text-green-400" : "text-red-400"}>
+                                <span className={row.savings! >= 0 ? "text-sky-400" : "text-red-400"}>
                                   ${row.savings! >= 0 ? "+" : ""}
                                   {row.savings!.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </span>
@@ -1327,7 +1344,7 @@ export default function DashboardPage() {
                   <h2 className="text-lg sm:text-2xl font-semibold text-white">Income by month</h2>
                   <Button
                     onClick={() => { setEditingIncome(null); setIsIncomeDrawerOpen(true); }}
-                    className="rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white"
+                    className="rounded-2xl bg-sky-600 hover:bg-sky-500 text-white"
                   >
                     <Banknote className="w-4 h-4 mr-2" strokeWidth={1.5} />
                     Add income
@@ -1367,7 +1384,7 @@ export default function DashboardPage() {
                               )}
                             </div>
                             <div className="flex items-center gap-4 text-right flex-wrap">
-                              <span className="text-emerald-400 font-semibold">
+                              <span className="text-sky-400 font-semibold">
                                 Income: ${Number(income.amount).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                               </span>
                               {(totalInterest ?? 0) > 0 && (
@@ -1485,7 +1502,7 @@ export default function DashboardPage() {
                   {avgSave3Month != null && (
                     <div className="rounded-xl bg-white/5 border border-white/10 p-4">
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg save (3 months)</p>
-                      <p className="text-xl font-semibold text-emerald-400">
+                      <p className="text-xl font-semibold text-sky-400">
                         ${avgSave3Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </p>
                     </div>
@@ -1493,12 +1510,65 @@ export default function DashboardPage() {
                   {avgSave6Month != null && (
                     <div className="rounded-xl bg-white/5 border border-white/10 p-4">
                       <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Avg save (6 months)</p>
-                      <p className="text-xl font-semibold text-emerald-400">
+                      <p className="text-xl font-semibold text-sky-400">
                         ${avgSave6Month.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </p>
                     </div>
                   )}
                 </div>
+
+                {/* Save vs Spend % pie chart */}
+                {analyticsSaveSpendPie != null && (
+                  <div className="mb-8">
+                    <h3 className="text-sm font-medium text-white mb-3">Share of income (last 12 months)</h3>
+                    <div className="rounded-xl bg-white/5 border border-white/10 p-4 flex flex-col sm:flex-row items-center gap-6">
+                      <div className="w-full sm:w-64 h-64 shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                            <Pie
+                              data={analyticsSaveSpendPie}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius="85%"
+                              paddingAngle={2}
+                              stroke="none"
+                              label={({ name, value }) => `${name} ${value}%`}
+                              labelLine={false}
+                            >
+                              {analyticsSaveSpendPie.map((entry, index) => (
+                                <Cell key={index} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value: number) => [`${value}%`, ""]}
+                              contentStyle={{ backgroundColor: "rgba(9,9,11,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
+                              labelStyle={{ color: "#a1a1aa" }}
+                              itemStyle={{ color: "#fff" }}
+                            />
+                            <Legend
+                              verticalAlign="middle"
+                              align="right"
+                              layout="vertical"
+                              formatter={(value, entry) => (
+                                <span className="text-sm text-muted-foreground">
+                                  {value} <span className="text-white font-medium">{entry.payload?.value}%</span>
+                                </span>
+                              )}
+                              iconType="circle"
+                              iconSize={10}
+                              wrapperStyle={{ paddingLeft: "1rem" }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Based on total spend and total savings as a share of total income over the last 12 months.
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Last 12 months summary table */}
                 {monthlySummaryRows.length > 0 && (
@@ -1531,7 +1601,7 @@ export default function DashboardPage() {
                               <td className="p-3 text-right text-white">
                                 {r.expenses != null ? `$${r.expenses.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
                               </td>
-                              <td className="p-3 text-right text-emerald-400">
+                              <td className="p-3 text-right text-sky-400">
                                 {r.savings != null ? `$${r.savings.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}
                               </td>
                               <td className="p-3 text-right text-muted-foreground">

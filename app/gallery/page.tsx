@@ -73,7 +73,7 @@ export default function GalleryPage() {
               </div>
               <div className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <item.icon className="w-5 h-5 text-emerald-400" strokeWidth={1.5} />
+                  <item.icon className="w-5 h-5 text-sky-400" strokeWidth={1.5} />
                   <h2 className="text-lg font-semibold text-white">{item.title}</h2>
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
