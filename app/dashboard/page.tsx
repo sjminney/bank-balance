@@ -12,7 +12,7 @@ import { BalanceChart } from "@/components/dashboard/balance-chart";
 import { SpendSaveChart } from "@/components/dashboard/spend-save-chart";
 import { QuickAddDrawer } from "@/components/dashboard/quick-add-drawer";
 import { AddIncomeDrawer } from "@/components/dashboard/add-income-drawer";
-import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle, X } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Plus, LogOut, Calendar, Target, TrendingUp as TrendingUpIcon, Settings, Banknote, Receipt, Pencil, Trash2, Minus, HelpCircle, PiggyBank, AlertTriangle, X, Sparkles } from "lucide-react";
 
 interface MonthlyBalance {
   id: string;
@@ -432,12 +432,20 @@ export default function DashboardPage() {
   const spendPctOfIncome = viewMonthIncome > 0 ? (viewMonthSpend / viewMonthIncome) * 100 : null;
   const savePctOfIncome = viewMonthIncome > 0 ? (viewMonthSave / viewMonthIncome) * 100 : null;
 
-  // Gentle warning when viewing latest: spending has been rising or savings slipping vs prior 3 months
+  // Gentle warning when viewing latest: spending has been rising or savings slipping vs prior 3 months (takes priority)
   const showSpendingRisingWarning = useMemo(() => {
     if (selectedViewMonth !== null) return false; // only when viewing "Latest"
     if (withExpensesView.length < 6) return false; // need 6 months for 3m vs 3m
     return spend3Trend === 1 || save3Trend === -1; // spend up or savings down lately
   }, [selectedViewMonth, withExpensesView.length, spend3Trend, save3Trend]);
+
+  // Encouragement when savings are going well (only when we're not showing the warning — warnings take priority)
+  const showSavingsEncouragement = useMemo(() => {
+    if (showSpendingRisingWarning) return false; // never show congrats when warning applies
+    if (selectedViewMonth !== null) return false;
+    if (withExpensesView.length < 6) return false;
+    return save3Trend === 1 || spend3Trend === -1; // savings up or spending down lately
+  }, [showSpendingRisingWarning, selectedViewMonth, withExpensesView.length, save3Trend, spend3Trend]);
 
   // Persist dismiss in session so it stays dismissed for this tab/session
   useEffect(() => {
@@ -702,6 +710,25 @@ export default function DashboardPage() {
                   >
                     <X className="w-4 h-4" strokeWidth={1.5} />
                   </button>
+                </motion.div>
+              )}
+
+              {/* Encouragement when savings are going well (only when warning isn't shown) */}
+              {showSavingsEncouragement && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20"
+                >
+                  <Sparkles className="w-5 h-5 text-green-400 shrink-0 mt-0.5" strokeWidth={1.5} />
+                  <p className="text-sm text-muted-foreground flex-1 min-w-0">
+                    <span className="font-medium text-green-200">Nice going —</span>{" "}
+                    {save3Trend === 1 && spend3Trend === -1
+                      ? "Your savings have been up and spending down compared to the previous 3 months. You're on track."
+                      : save3Trend === 1
+                        ? "Your savings have been higher lately compared to the previous 3 months. Keep it up."
+                        : "Your spending has been lower lately compared to the previous 3 months. Great progress."}
+                  </p>
                 </motion.div>
               )}
 
