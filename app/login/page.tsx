@@ -287,6 +287,10 @@ export default function LoginPage() {
             <Link href="/help" className="text-white/80 hover:text-white underline underline-offset-2">
               How to use Bank Balance
             </Link>
+            {" · "}
+            <Link href="/blog" className="text-white/80 hover:text-white underline underline-offset-2">
+              Tips to save
+            </Link>
           </p>
           <p className="text-sm text-muted-foreground">
             Secure authentication powered by Supabase
