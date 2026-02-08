@@ -365,7 +365,7 @@ export function QuickAddDrawer({ open, onOpenChange, onSuccess, initialBalance }
             type="number"
             step="0.01"
             min="0"
-            placeholder="e.g. inheritance, bonus"
+            placeholder="e.g. inheritance, bonus, tax refund"
             defaultValue={initialBalance?.one_off_deposit ?? ""}
             className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all"
           />
