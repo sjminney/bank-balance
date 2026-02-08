@@ -145,7 +145,7 @@ export default function HelpPage() {
               <li><strong className="text-white">Bank Balance</strong> — total of all balances for the selected (or latest) month. Use <strong className="text-white">Add balance</strong> to record a new balance.</li>
               <li><strong className="text-white">Spend / Savings (this month)</strong> — as above; use View month to see any month. When you have income for that month, we also show <strong className="text-white">% of income</strong> for spend and save.</li>
               <li><strong className="text-white">3m / 6m averages</strong> — average spend and savings over the last 3 or 6 months.</li>
-              <li><strong className="text-white">Annual projection</strong> — based on your average monthly savings.</li>
+              <li><strong className="text-white">Annual projected savings</strong> — based on your average monthly savings.</li>
               <li><strong className="text-white">Monthly summary table</strong> — balance, income, spend and savings per month.</li>
               <li><strong className="text-white">Spend & Save chart</strong> — how spend and savings move over time (trendlines only; no averages in the legend).</li>
             </ul>

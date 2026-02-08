@@ -788,7 +788,7 @@ export default function DashboardPage() {
                 </motion.div>
               )}
 
-              {/* Metrics — order: Spend, Save, 3M spend, 3M save, 6M spend, 6M save, Income, Bank balance, Annual Projection */}
+              {/* Metrics — order: Spend, Save, 3M spend, 3M save, 6M spend, 6M save, Income, Bank balance, Annual projected savings */}
               {(balances.length > 0 || incomes.length > 0) && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -1011,7 +1011,7 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  {/* 9. Annual Projection */}
+                  {/* 9. Annual projected savings */}
                   <div className="glass-card p-4 sm:p-6">
                     <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -1019,7 +1019,7 @@ export default function DashboardPage() {
                           <Target className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" strokeWidth={1.5} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs sm:text-sm text-muted-foreground">Annual Projection</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">Annual projected savings</p>
                           <p className={`text-xl sm:text-2xl font-semibold tabular-nums break-words ${displayProjection >= 0 ? "text-sky-400" : "text-red-400"}`}>
                             {displayProjection >= 0 ? "+" : ""}
                             ${displayProjection.toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
