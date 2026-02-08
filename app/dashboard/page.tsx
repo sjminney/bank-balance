@@ -777,7 +777,7 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 [&>div]:min-w-0"
                 >
                   {/* 1. Spend this month */}
                   {viewMonth && (
@@ -938,22 +938,20 @@ export default function DashboardPage() {
                   )}
 
                   {/* 7. Income this month */}
-                  <div className="glass-card p-4 sm:p-6">
+                  <div className="glass-card p-4 sm:p-6 min-w-0 overflow-hidden">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
-                      <div className="flex items-center justify-between gap-2 min-w-0">
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                          <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
-                            <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" strokeWidth={1.5} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-xs sm:text-sm text-muted-foreground">Income ({viewMonthLabel})</p>
-                            <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
-                              ${(incomes.find((i) => i.month_year === (viewMonth ?? incomes[0]?.month_year))?.amount ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                            </p>
-                            {(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
-                              <p className="text-xs text-muted-foreground">Interest: ${(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-                            )}
-                          </div>
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
+                          <Banknote className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" strokeWidth={1.5} />
+                        </div>
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">Income ({viewMonthLabel})</p>
+                          <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums truncate">
+                            ${(incomes.find((i) => i.month_year === (viewMonth ?? incomes[0]?.month_year))?.amount ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          </p>
+                          {(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
+                            <p className="text-xs text-muted-foreground truncate">Interest: ${(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                          )}
                         </div>
                         {incomeThisMonthTrend !== null && (
                           <span className="flex items-center gap-0.5 shrink-0" title={incomeThisMonthTrend === 1 ? "Up vs prior month" : incomeThisMonthTrend === -1 ? "Down vs prior month" : "Flat"}>
@@ -965,7 +963,7 @@ export default function DashboardPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => { setEditingIncome(null); setIsIncomeDrawerOpen(true); }}
-                        className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0"
+                        className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0 self-start sm:self-center"
                       >
                         Add income
                       </Button>
@@ -982,17 +980,17 @@ export default function DashboardPage() {
                   </div>
 
                   {/* 8. Bank balance */}
-                  <div className="glass-card p-4 sm:p-6">
+                  <div className="glass-card p-4 sm:p-6 min-w-0 overflow-hidden">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 sm:mb-3">
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
                         <div className="p-1.5 sm:p-2 rounded-xl bg-white/10 shrink-0">
                           <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" strokeWidth={1.5} />
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs sm:text-sm text-muted-foreground">
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">
                             Bank Balance{viewMonthLabel !== "this month" ? ` (${viewMonthLabel})` : ""}
                           </p>
-                          <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-words">
+                          <p className="text-xl sm:text-2xl font-semibold text-white tabular-nums break-all">
                             ${(viewMonth ? viewTotalBalance : metrics.totalBalance).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                           </p>
                         </div>
@@ -1001,7 +999,7 @@ export default function DashboardPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => { setEditingBalance(null); setIsDrawerOpen(true); }}
-                        className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0"
+                        className="rounded-xl border-white/20 text-muted-foreground hover:text-white shrink-0 self-start sm:self-center"
                       >
                         <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
                         Add balance
