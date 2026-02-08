@@ -108,13 +108,14 @@ export default function HelpPage() {
             </h2>
             <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
               <li>
-                <strong className="text-white">Add bank accounts</strong> in Settings (e.g. “Everyday”, “Savings”). You can set a type
-                (e.g. savings) and colour. You can also add a new account from the <strong className="text-white">Add balance</strong> flow:
-                when adding a balance, choose “+ Add new account…” from the account dropdown and fill in the details.
+                <strong className="text-white">Use one account.</strong> We recommend adding a single account (e.g. “Total” or “All accounts”) and
+                entering your <strong className="text-white">total balance across all your accounts</strong> each month. That’s enough to get
+                spend and savings. You can add multiple accounts in Settings if you want more granularity (e.g. per-bank breakdowns), but for
+                a simple app the extra effort usually isn’t worth it.
               </li>
               <li>
                 <strong className="text-white">Add monthly balances</strong> — use <strong className="text-white">Add balance</strong> on the
-                Bank Balance card or under Accounts. For each month, enter the total balance per account (or combined). Add <strong className="text-white">interest
+                Bank Balance card or under Accounts. For each month, enter the total (or per-account if you use more than one). Add <strong className="text-white">interest
                 earned</strong> and any <strong className="text-white">one-off deposit</strong> so we can exclude them from spend/savings.
               </li>
               <li>
