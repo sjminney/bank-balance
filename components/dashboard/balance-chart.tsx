@@ -11,19 +11,22 @@ function formatBalanceLabel(value: number): string {
   return String(Math.round(value));
 }
 
-function BalanceDataLabel(props: { x?: number; y?: number; value?: number }) {
-  const { x = 0, y = 0, value } = props;
-  if (value == null || typeof value !== "number") return null;
+function BalanceDataLabel(props: { x?: string | number; y?: string | number; value?: string | number }) {
+  const { x, y, value } = props;
+  const numX = typeof x === "number" ? x : 0;
+  const numY = typeof y === "number" ? y : 0;
+  const numVal = typeof value === "number" ? value : typeof value === "string" ? parseFloat(value) : NaN;
+  if (value == null || Number.isNaN(numVal)) return null;
   return (
     <text
-      x={x}
-      y={(y ?? 0) - 8}
+      x={numX}
+      y={numY - 8}
       textAnchor="middle"
       fill={BALANCE_COLOR}
       fillOpacity={0.95}
       style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: "0.02em" }}
     >
-      {formatBalanceLabel(value)}
+      {formatBalanceLabel(numVal)}
     </text>
   );
 }
@@ -150,7 +153,7 @@ export function BalanceChart({ data, selectedAccountIds }: BalanceChartProps) {
             activeDot={{ r: 6, fill: "#3b82f6" }}
             filter="url(#glow)"
           >
-            <LabelList dataKey="balance" position="top" content={(p) => <BalanceDataLabel {...p} />} />
+            <LabelList dataKey="balance" position="top" content={(p: { x?: string | number; y?: string | number; value?: string | number }) => <BalanceDataLabel x={p.x} y={p.y} value={p.value} />} />
           </Line>
         </LineChart>
       </ResponsiveContainer>

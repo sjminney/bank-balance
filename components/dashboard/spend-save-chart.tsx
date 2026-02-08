@@ -49,14 +49,17 @@ function formatDataLabel(value: number): string {
 }
 
 // Custom label so we can style it (softer, series-colored, no Excel look)
-function CustomDataLabel(props: { x?: number; y?: number; value?: number; color: string }) {
-  const { x = 0, y = 0, value, color } = props;
-  if (value == null || typeof value !== "number") return null;
-  const text = formatDataLabel(value);
+function CustomDataLabel(props: { x?: string | number; y?: string | number; value?: string | number; color: string }) {
+  const { x, y, value, color } = props;
+  const numX = typeof x === "number" ? x : 0;
+  const numY = typeof y === "number" ? y : 0;
+  const numVal = typeof value === "number" ? value : typeof value === "string" ? parseFloat(value) : NaN;
+  if (value == null || Number.isNaN(numVal)) return null;
+  const text = formatDataLabel(numVal);
   return (
     <text
-      x={x}
-      y={(y ?? 0) - 8}
+      x={numX}
+      y={numY - 8}
       textAnchor="middle"
       fill={color}
       fillOpacity={0.95}
@@ -183,7 +186,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               connectNulls
             >
               {showSpend && (
-                <LabelList dataKey="spend" position="top" content={(p) => <CustomDataLabel {...p} color={SPEND_COLOR} />} />
+                <LabelList dataKey="spend" position="top" content={(p: { x?: string | number; y?: string | number; value?: string | number }) => <CustomDataLabel x={p.x} y={p.y} value={p.value} color={SPEND_COLOR} />} />
               )}
             </Line>
             <Line
@@ -208,7 +211,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               connectNulls
             >
               {showSave && (
-                <LabelList dataKey="save" position="top" content={(p) => <CustomDataLabel {...p} color={SAVE_COLOR} />} />
+                <LabelList dataKey="save" position="top" content={(p: { x?: string | number; y?: string | number; value?: string | number }) => <CustomDataLabel x={p.x} y={p.y} value={p.value} color={SAVE_COLOR} />} />
               )}
             </Line>
             <Line
