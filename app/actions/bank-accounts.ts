@@ -3,6 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
+const ALLOWED_ACCOUNT_TYPES = ["transactions", "expenses", "savings", "emergency", "fun"] as const;
+const ALLOWED_CURRENCIES = ["AUD", "USD", "EUR", "GBP", "NZD"] as const;
+
+function validateAccountType(v: string): string {
+  return ALLOWED_ACCOUNT_TYPES.includes(v as (typeof ALLOWED_ACCOUNT_TYPES)[number]) ? v : "transactions";
+}
+
+function validateCurrency(v: string): string {
+  return ALLOWED_CURRENCIES.includes(v as (typeof ALLOWED_CURRENCIES)[number]) ? v : "AUD";
+}
+
 export async function addBankAccount(formData: FormData) {
   try {
     const supabase = await createClient();
@@ -16,11 +27,11 @@ export async function addBankAccount(formData: FormData) {
       return { error: "You must be logged in to add a bank account" };
     }
 
-    const name = formData.get("name") as string;
-    const bankName = formData.get("bank_name") as string | null;
-    const accountType = formData.get("account_type") as string;
-    const accountNumberLast4 = formData.get("account_number_last4") as string | null;
-    const currency = formData.get("currency") as string || "AUD";
+    const name = (formData.get("name") as string)?.trim();
+    const bankName = (formData.get("bank_name") as string)?.trim() || null;
+    const accountType = validateAccountType((formData.get("account_type") as string) || "transactions");
+    const accountNumberLast4 = (formData.get("account_number_last4") as string)?.trim() || null;
+    const currency = validateCurrency((formData.get("currency") as string) || "AUD");
     const color = formData.get("color") as string | null;
     const notes = formData.get("notes") as string | null;
 
@@ -72,17 +83,17 @@ export async function updateBankAccount(id: string, formData: FormData) {
       return { error: "You must be logged in to update a bank account" };
     }
 
-    const name = formData.get("name") as string;
-    const bankName = formData.get("bank_name") as string | null;
-    const accountType = formData.get("account_type") as string;
-    const accountNumberLast4 = formData.get("account_number_last4") as string | null;
-    const currency = formData.get("currency") as string || "AUD";
-    const color = formData.get("color") as string | null;
-    const notes = formData.get("notes") as string | null;
+    const name = (formData.get("name") as string)?.trim();
+    const bankName = (formData.get("bank_name") as string)?.trim() || null;
+    const accountType = validateAccountType((formData.get("account_type") as string) || "transactions");
+    const accountNumberLast4 = (formData.get("account_number_last4") as string)?.trim() || null;
+    const currency = validateCurrency((formData.get("currency") as string) || "AUD");
+    const color = (formData.get("color") as string)?.trim() || null;
+    const notes = (formData.get("notes") as string)?.trim() || null;
     const isActive = formData.get("is_active") === "true";
 
-    if (!name || !accountType) {
-      return { error: "Account name and type are required" };
+    if (!name) {
+      return { error: "Account name is required" };
     }
 
     const { error } = await supabase
