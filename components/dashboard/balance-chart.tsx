@@ -153,7 +153,13 @@ export function BalanceChart({ data, selectedAccountIds }: BalanceChartProps) {
             activeDot={{ r: 6, fill: "#3b82f6" }}
             filter="url(#glow)"
           >
-            <LabelList dataKey="balance" position="top" content={(p: { x?: string | number; y?: string | number; value?: string | number }) => <BalanceDataLabel x={p.x} y={p.y} value={p.value} />} />
+            <LabelList
+              dataKey="balance"
+              position="top"
+              content={(p: { x?: string | number; y?: string | number; value?: string | number; index?: number }) =>
+                (p.index ?? 0) % 2 === 0 ? <BalanceDataLabel x={p.x} y={p.y} value={p.value} /> : null
+              }
+            />
           </Line>
         </LineChart>
       </ResponsiveContainer>
