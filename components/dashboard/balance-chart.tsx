@@ -1,7 +1,32 @@
 "use client";
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList } from "recharts";
 import { useMemo } from "react";
+
+const BALANCE_COLOR = "#60a5fa";
+
+function formatBalanceLabel(value: number): string {
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  if (value <= -1000) return `-${(Math.abs(value) / 1000).toFixed(1)}k`;
+  return String(Math.round(value));
+}
+
+function BalanceDataLabel(props: { x?: number; y?: number; value?: number }) {
+  const { x = 0, y = 0, value } = props;
+  if (value == null || typeof value !== "number") return null;
+  return (
+    <text
+      x={x}
+      y={(y ?? 0) - 8}
+      textAnchor="middle"
+      fill={BALANCE_COLOR}
+      fillOpacity={0.95}
+      style={{ fontFamily: "system-ui, -apple-system, sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: "0.02em" }}
+    >
+      {formatBalanceLabel(value)}
+    </text>
+  );
+}
 
 interface BalanceData {
   month_year: string;
@@ -124,7 +149,9 @@ export function BalanceChart({ data, selectedAccountIds }: BalanceChartProps) {
             dot={{ fill: "#60a5fa", r: 4 }}
             activeDot={{ r: 6, fill: "#3b82f6" }}
             filter="url(#glow)"
-          />
+          >
+            <LabelList dataKey="balance" position="top" content={(p) => <BalanceDataLabel {...p} />} />
+          </Line>
         </LineChart>
       </ResponsiveContainer>
     </div>

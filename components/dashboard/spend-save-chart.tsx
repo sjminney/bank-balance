@@ -48,6 +48,30 @@ function formatDataLabel(value: number): string {
   return String(Math.round(value));
 }
 
+// Custom label so we can style it (softer, series-colored, no Excel look)
+function CustomDataLabel(props: { x?: number; y?: number; value?: number; color: string }) {
+  const { x = 0, y = 0, value, color } = props;
+  if (value == null || typeof value !== "number") return null;
+  const text = formatDataLabel(value);
+  return (
+    <text
+      x={x}
+      y={(y ?? 0) - 8}
+      textAnchor="middle"
+      fill={color}
+      fillOpacity={0.95}
+      style={{
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontSize: 10,
+        fontWeight: 500,
+        letterSpacing: "0.02em",
+      }}
+    >
+      {text}
+    </text>
+  );
+}
+
 export function SpendSaveChart({ data }: SpendSaveChartProps) {
   const [showSpend, setShowSpend] = useState(true);
   const [showSave, setShowSave] = useState(false);
@@ -159,7 +183,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               connectNulls
             >
               {showSpend && (
-                <LabelList dataKey="spend" position="top" fill="rgba(255,255,255,0.8)" fontSize={11} formatter={formatDataLabel} />
+                <LabelList dataKey="spend" position="top" content={(p) => <CustomDataLabel {...p} color={SPEND_COLOR} />} />
               )}
             </Line>
             <Line
@@ -184,7 +208,7 @@ export function SpendSaveChart({ data }: SpendSaveChartProps) {
               connectNulls
             >
               {showSave && (
-                <LabelList dataKey="save" position="top" fill="rgba(255,255,255,0.8)" fontSize={11} formatter={formatDataLabel} />
+                <LabelList dataKey="save" position="top" content={(p) => <CustomDataLabel {...p} color={SAVE_COLOR} />} />
               )}
             </Line>
             <Line
