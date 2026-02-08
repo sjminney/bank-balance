@@ -1532,17 +1532,16 @@ export default function DashboardPage() {
                               cx="50%"
                               cy="50%"
                               outerRadius="85%"
-                              paddingAngle={2}
-                              stroke="none"
-                              label={({ name, value }) => `${name} ${value}%`}
-                              labelLine={false}
+                              paddingAngle={0}
+                              stroke="#09090b"
+                              strokeWidth={3}
                             >
                               {analyticsSaveSpendPie.map((entry, index) => (
                                 <Cell key={index} fill={entry.color} />
                               ))}
                             </Pie>
                             <Tooltip
-                              formatter={(value: number) => [`${value}%`, ""]}
+                              formatter={(value: number) => `${value}%`}
                               contentStyle={{ backgroundColor: "rgba(9,9,11,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
                               labelStyle={{ color: "#a1a1aa" }}
                               itemStyle={{ color: "#fff" }}
@@ -1553,7 +1552,7 @@ export default function DashboardPage() {
                               layout="vertical"
                               formatter={(value, entry) => (
                                 <span className="text-sm text-muted-foreground">
-                                  {value} <span className="text-white font-medium">{entry.payload?.value}%</span>
+                                  {value} <span className="text-white font-medium">{entry.payload?.value != null ? `${entry.payload.value}%` : ""}</span>
                                 </span>
                               )}
                               iconType="circle"
