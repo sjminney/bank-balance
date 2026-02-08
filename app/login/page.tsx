@@ -279,6 +279,11 @@ export default function LoginPage() {
           className="text-center mt-8 space-y-2"
         >
           <p className="text-sm text-muted-foreground">
+            <Link href="/gallery" className="text-white/80 hover:text-white underline underline-offset-2">
+              See what you&apos;re signing up for
+            </Link>
+          </p>
+          <p className="text-sm text-muted-foreground">
             <Link href="/help" className="text-white/80 hover:text-white underline underline-offset-2">
               How to use Bank Balance
             </Link>
