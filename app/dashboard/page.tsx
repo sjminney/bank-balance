@@ -957,11 +957,6 @@ export default function DashboardPage() {
                         </span>
                       )}
                     </div>
-                    {(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0) > 0 && (
-                      <p className="text-xs text-muted-foreground mb-1">
-                        Interest: ${(interestByMonth.get(viewMonth ?? incomes[0]?.month_year ?? "") ?? 0).toLocaleString("en-AU", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </p>
-                    )}
                     <p className="text-xs text-muted-foreground">
                       {(() => {
                         const m = viewMonth ?? incomes[0]?.month_year ?? "";
